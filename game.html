@@ -47,7 +47,7 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui
 .card-area { margin-bottom:20px; }
 .card { background:linear-gradient(145deg,#25253a,#1a1a2e); border:1px solid #3a3a55; border-radius:20px; padding:36px 24px; min-height:200px; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; box-shadow:0 8px 32px rgba(255,61,110,.15); }
 .card-label { font-size:.7rem; font-weight:800; letter-spacing:3px; color:var(--accent); margin-bottom:16px; text-transform:uppercase; }
-.card-text { font-size:1.25rem; font-weight:700; line-height:1.5; }
+.card-text { font-size:1.2rem; font-weight:700; line-height:1.5; }
 @keyframes flipIn { from{opacity:0;transform:scale(.95)} to{opacity:1;transform:scale(1)} }
 .card.flip { animation:flipIn .3s ease; }
 .drink-prompt { text-align:center; color:var(--muted); font-size:.9rem; margin-bottom:16px; }
@@ -55,8 +55,8 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui
 .scoreboard { background:var(--surface); border-radius:14px; border:1px solid var(--border); padding:14px; margin-bottom:16px; }
 .drink-label { font-size:.8rem; color:var(--muted); margin-bottom:10px; text-align:center; }
 .drink-chips { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-bottom:14px; }
-.drink-chip { padding:10px 16px; border-radius:20px; border:1px solid var(--border); background:var(--card-bg); color:var(--text); font-size:.9rem; cursor:pointer; }
-.drink-chip:active { border-color:var(--accent); background:#2a1822; transform:scale(.95); }
+.drink-chip { padding:10px 16px; border-radius:20px; border:1px solid var(--border); background:var(--card-bg); color:var(--text); font-size:.9rem; cursor:pointer; transition:transform .1s; }
+.drink-chip:active { border-color:var(--accent); background:#2a1822; transform:scale(.93); }
 .scores-list { display:flex; flex-direction:column; gap:4px; }
 .score-row { display:flex; justify-content:space-between; align-items:center; padding:4px 2px; font-size:.85rem; }
 .score-name { color:var(--muted); }
@@ -75,7 +75,8 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui
 .final-score-row:last-child { border-bottom:none; }
 .rank { font-size:1.1rem; }
 .end-actions { display:flex; flex-direction:column; gap:10px; width:100%; }
-@media(max-width:380px){ .card-text{font-size:1.1rem} #home-screen h1{font-size:1.7rem} }
+.remaining-tag { font-size:.75rem; color:var(--muted); text-align:center; margin-top:6px; }
+@media(max-width:380px){ .card-text{font-size:1.05rem} #home-screen h1{font-size:1.7rem} }
   </style>
 </head>
 <body>
@@ -120,7 +121,7 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui
   <div id="game-screen" class="screen">
     <div class="game-header">
       <button class="back-btn" onclick="goHome()">✕</button>
-      <div class="card-counter" id="card-counter">Carta 1/20</div>
+      <div class="card-counter" id="card-counter">Carta 1/25</div>
     </div>
     <div class="turn-indicator" id="turn-indicator">Turno de <span id="current-player"></span></div>
     <div class="card-area">
@@ -142,8 +143,10 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui
       <p>El más picante fue:</p>
       <div class="winner" id="winner-name"></div>
       <div class="final-scores" id="final-scores"></div>
+      <div class="remaining-tag" id="remaining-tag"></div>
       <div class="end-actions">
-        <button class="start-btn" onclick="restartGame()">Jugar de nuevo</button>
+        <button class="start-btn" onclick="restartGame()">Seguir jugando →</button>
+        <button class="secondary-btn" onclick="newGame()">Nueva partida</button>
         <button class="secondary-btn" onclick="goHome()">Menú principal</button>
       </div>
     </div>
@@ -151,11 +154,146 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui
 </div>
 <script>
 const CARDS = {
-  medium: ["mandé un mensaje al ex a las 3am","me hice el dormido para no contestar el teléfono","besé a alguien en una previa sin saber su nombre","mentí sobre mi edad","stalkié el Instagram de alguien durante más de una hora","mandé un audio por error a quien no era","hice ghosting a alguien que me gustaba","dije 'ya llego' cuando ni me había bañado","borré un mensaje y lo reescribí cinco veces","tuve un crush con el/la mejor amigo/a de mi amigo/a","mentí que estaba enfermo para no salir","le escribí a alguien borracho y lo negué al otro día","besé a dos personas en la misma noche","tuve un sueño con alguien de este grupo","revisé el teléfono de mi pareja sin permiso","terminé algo con alguien solo por WhatsApp","tuve un crush secreto con alguien de este grupo","lloré viendo una peli de Disney","usé a alguien para darle celos a otro","me inventé planes para no salir con alguien"],
-  hot: ["mandé una foto picante por error","tuve relaciones en la casa de mis viejos","tuve más de tres personas al mismo tiempo","me desperté sin saber dónde estaba","salí sin ropa interior porque no encontraba limpia","tuve relaciones con alguien del grupo de amigos","besé a alguien de este grupo","tuve relaciones en un lugar público","me bañé con alguien sin que fuera mi pareja","usé una excusa para quedarme a dormir en lo de alguien","tuve sentimientos por alguien de este grupo","mentí sobre cuántas personas besé","tuve una noche de una sola vez y lo repetí","me atraparon mirando el cuerpo de alguien de este grupo","me gustó alguien de este grupo más de lo que admití","tuve relaciones con alguien que conocí ese mismo día","me arrepentí de alguien al día siguiente","mandé una foto de mí mismo que no debía","tuve relaciones con alguien más de diez años mayor","hice el lindo borracho para que me lleven a casa"],
-  extreme: ["tuve una fantasía con alguien de este grupo","tuve relaciones siendo pareja de otra persona","mandé fotos íntimas que luego lamenté","hice algo sexual donde me podían ver","tuve relaciones con dos personas del mismo grupo de amigos","tuve una cita doble sin que los otros supieran","tuve relaciones y después dije que no pasó nada","tuve relaciones en la misma cama donde había alguien durmiendo","mandé un mensaje sexual sin querer a un familiar","tuve sentimientos por la pareja de un amigo/a","hice algo en una fiesta que prometí nunca contar","tuve relaciones con alguien cuyo nombre no recuerdo","mentí sobre dónde estaba para estar con alguien","tuve un rol o juego de fantasía","alguien me vio en una situación comprometida y nunca lo hablamos","hice algo de lo que me arrepiento cada vez que lo recuerdo","tuve más de cinco personas en el mismo mes","hice un striptease aunque sea para mí solo/a","tuve relaciones con alguien del trabajo o la facultad","usé a alguien para ponerle celos a otro"]
+  medium: [
+    "mandé un mensaje al ex a las 3am","me hice el dormido para no contestar el teléfono",
+    "besé a alguien en una previa sin saber su nombre","mentí sobre mi edad",
+    "stalkié el Instagram de alguien durante más de una hora",
+    "mandé un audio por error a quien no era","hice ghosting a alguien que me gustaba",
+    "dije 'ya llego' cuando ni me había bañado","borré un mensaje y lo reescribí más de tres veces",
+    "mentí que estaba enfermo para no salir","le escribí a alguien borracho y lo negué al otro día",
+    "besé a dos personas en la misma noche","revisé el teléfono de mi pareja sin permiso",
+    "terminé algo con alguien solo por WhatsApp","lloré viendo una peli de Disney de adulto",
+    "ignoré a alguien a propósito para ver si me buscaba",
+    "miré el estado de WhatsApp de alguien más de cinco veces en un día",
+    "vi las stories de alguien con el perfil de otro para que no se diera cuenta",
+    "me inventé planes para no salir con alguien","cambié de tema para no responder algo incómodo",
+    "me puse a ver el perfil de mi ex a la madrugada",
+    "mandé un meme a alguien para coquetear sin admitirlo",
+    "fingí estar más ocupado/a de lo que estaba para parecer interesante",
+    "borré una foto de Instagram por los likes que tenía",
+    "actué diferente delante de alguien que me gustaba",
+    "tuve un sueño con alguien de este grupo","tuve un crush secreto con alguien de este grupo",
+    "le conté a alguien cosas privadas de otro del grupo",
+    "hablé de alguien de este grupo cuando no estaba",
+    "guardé una foto de alguien de este grupo sin que lo supiera",
+    "tuve una pelea con alguien de este grupo que nunca se habló abiertamente",
+    "cancelé planes con alguien de este grupo sin una excusa real",
+    "le mandé un screenshot de conversación de alguien de este grupo a otra persona",
+    "puse una canción pensando en alguien de este grupo",
+    "me puse celoso/a de alguien de este grupo sin razón aparente",
+    "le pregunté a alguien del grupo qué piensa de mí",
+    "me acordé de alguien de este grupo en un momento inapropiado",
+    "sentí envidia de alguien de este grupo",
+    "mandé un mensaje al grupo por error que era privado",
+    "hice una story pensando en que la vea alguien de este grupo",
+    "me gustó alguien de este grupo en algún momento de esta noche",
+    "actué como que no me importaba algo que sí me importaba delante del grupo",
+    "le mentí a alguien de este grupo sobre dónde estaba",
+    "tuve un momento raro con alguien de este grupo que ninguno habló después",
+    "encontré a alguien de este grupo atractivo/a sin haberlo admitido antes",
+    "hice un comentario sobre alguien de este grupo que luego lamenté",
+    "me inventé una historia para quedar bien delante de alguien del grupo",
+    "le pedí a alguien del grupo que me ayude a hablarle a alguien que me gustaba",
+    "comparé a mi ex con alguien de este grupo",
+    "tuve miedo de que alguien de este grupo leyera mis conversaciones"
+  ],
+  hot: [
+    "mandé una foto picante por error","tuve relaciones en la casa de mis viejos",
+    "me desperté sin saber dónde estaba","salí sin ropa interior porque no encontraba limpia",
+    "tuve relaciones en un lugar público","me bañé con alguien sin que fuera mi pareja",
+    "usé una excusa para quedarme a dormir en lo de alguien",
+    "mentí sobre cuántas personas besé","tuve una noche de una sola vez y lo repetí",
+    "me arrepentí de alguien al día siguiente","mandé una foto de mí mismo/a que no debía",
+    "tuve relaciones con alguien más de diez años mayor",
+    "hice el lindo/a borracho/a para que me lleven a casa",
+    "fingí no tener pareja para coquetear con alguien",
+    "usé la excusa de 'estaba borracho/a' para algo que quería hacer sobrio/a",
+    "tuve relaciones y me fui antes de que despertara",
+    "tuve relaciones con dos personas que se conocían entre sí",
+    "tuve más de una persona al mismo tiempo que creía ser la única",
+    "tuve relaciones en un baño de una fiesta","hice algo atrevido por una apuesta",
+    "tuve relaciones con alguien mucho más joven que yo",
+    "me hice el/la difícil con alguien que me gustaba de verdad",
+    "tuve una cita que terminó en algo que no esperaba",
+    "tuve relaciones afuera, en un patio o jardín",
+    "hice algo sexual por primera vez en los últimos seis meses",
+    "tuve sentimientos por alguien de este grupo","besé a alguien de este grupo",
+    "me atraparon mirando el cuerpo de alguien de este grupo",
+    "me gustó alguien de este grupo más de lo que admití",
+    "tuve relaciones con alguien sin que nadie del grupo lo sepa hasta hoy",
+    "tuve relaciones con alguien del grupo de amigos",
+    "pensé en alguien de este grupo en un momento íntimo",
+    "tuve una conversación subida de tono con alguien de este grupo",
+    "le coqueteé a alguien de este grupo y lo disfracé de chiste",
+    "tuve ganas de besar a alguien de este grupo esta noche",
+    "le di un beso a alguien de este grupo que no era en la mejilla",
+    "me desperté en la cama de alguien de este grupo",
+    "le mandé un mensaje atrevido a alguien de este grupo y lo borré",
+    "tuve ganas de algo con alguien de este grupo pero no lo hice",
+    "me quedé a dormir en lo de alguien de este grupo sin que fuera planificado",
+    "tuve relaciones con alguien del grupo sin que los demás lo sepan hasta hoy",
+    "alguien de este grupo fue parte de algo que prometí no contar",
+    "coqueteé con alguien de este grupo delante de su pareja",
+    "me vestí de cierta manera para llamar la atención de alguien de este grupo",
+    "le toqué la mano o el hombro a alguien de este grupo con intención",
+    "tuve relaciones con alguien que en ese momento tenía pareja",
+    "le pregunté a alguien del grupo si le gustaba alguien del grupo",
+    "tuve una conversación sobre alguien de este grupo de la que esa persona no sabe",
+    "besé a alguien de este grupo pensando que nadie miraba",
+    "me desperté con alguien de este grupo y actuamos como si nada"
+  ],
+  extreme: [
+    "tuve relaciones siendo pareja de otra persona","mandé fotos íntimas que luego lamenté",
+    "hice algo sexual donde me podían ver","tuve una cita doble sin que los otros supieran",
+    "tuve relaciones y después dije que no pasó nada",
+    "tuve relaciones en la misma cama donde había alguien durmiendo",
+    "mandé un mensaje sexual sin querer a un familiar",
+    "tuve sentimientos por la pareja de un amigo/a",
+    "hice algo en una fiesta que prometí nunca contar",
+    "tuve relaciones con alguien cuyo nombre no recuerdo",
+    "mentí sobre dónde estaba para estar con alguien","tuve un rol o juego de fantasía",
+    "hice algo de lo que me arrepiento cada vez que lo recuerdo",
+    "tuve más de cinco personas en el mismo mes","hice un striptease aunque sea para mí solo/a",
+    "mandé un mensaje sexual sin querer a alguien equivocado",
+    "tuve relaciones con alguien que tenía pareja y la pareja lo conocía",
+    "tuve relaciones y mandé un mensaje a otra persona justo después",
+    "mandé fotos que no debía y las recibió alguien equivocado",
+    "hice algo que si lo supiera mi familia cambiaría todo",
+    "tuve más de una persona en la misma semana sin que supieran del otro",
+    "hice algo que me dio vergüenza al otro día y fingí que no pasó nada",
+    "me enamoré en silencio y actué como si esa persona no me gustara nada",
+    "tuve relaciones con alguien del trabajo o la facultad",
+    "hice algo íntimo que sorprendería a todos los que me conocen",
+    "tuve una fantasía con alguien de este grupo",
+    "hice algo con alguien de este grupo que ninguno de los dos habló después",
+    "alguien de este grupo me vio en una situación que me da vergüenza recordar",
+    "le dije algo a alguien de este grupo en estado alterado que no hubiese dicho sobrio/a",
+    "hice algo sexual que nadie de este grupo sabe",
+    "tuve relaciones con alguien que tiene pareja en este grupo",
+    "le guardé secretos a alguien de este grupo que cambiarían su percepción de mí",
+    "hice algo íntimo con alguien de este grupo antes de esta noche",
+    "tuve una fantasía con más de uno de este grupo al mismo tiempo",
+    "le mandé algo que nunca debí a alguien de este grupo",
+    "hice algo con alguien de este grupo cuando había pareja de por medio",
+    "me enamoré de alguien de este grupo y nunca lo dije",
+    "hice algo en una previa con alguien de este grupo que los dos prometimos olvidar",
+    "alguien de este grupo sabe algo de mí que yo jamás admitiría públicamente",
+    "tuve algo con dos personas de este grupo en momentos distintos",
+    "hice algo que si alguien de este grupo se entera cambia la dinámica del grupo",
+    "pensé en alguien de este grupo en un momento muy íntimo esta semana",
+    "hice algo en privado con alguien de este grupo que nadie más sabe",
+    "le tuve ganas a alguien de este grupo estando con otra persona",
+    "alguien de este grupo fue cómplice de algo que no debía",
+    "tuve relaciones con dos personas de este grupo en distintos momentos",
+    "tuve algo breve con alguien de este grupo que quedó sin resolver",
+    "hice algo que si todos en este grupo lo supieran no me lo perdonarían",
+    "tuve una fantasía específica con alguien de este grupo esta noche",
+    "tuve relaciones con alguien de este grupo antes de hoy"
+  ]
 };
+const CARDS_PER_GAME = 25;
 let players=[],scores={},cards=[],cardIdx=0,playerIdx=0,category='medium';
+let usedIndices={};
 function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
 function goHome(){showScreen('home-screen');}
 function goToGame(g){if(g==='yo-nunca'){players=[];showScreen('setup-screen');addPlayer();addPlayer();}}
@@ -164,13 +302,15 @@ function removePlayer(i){if(players.length<=2)return;players.splice(i,1);renderP
 function renderPlayers(){document.getElementById('player-list').innerHTML=players.map((p,i)=>`<div class="player-input-row"><input class="player-input" type="text" value="${p.name}" placeholder="Nombre" oninput="players[${i}].name=this.value||'Jugador ${i+1}'"/>${players.length>2?`<button class="remove-player" onclick="removePlayer(${i})">✕</button>`:''}</div>`).join('');}
 function selectCategory(btn){document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');category=btn.dataset.cat;}
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
-function startGame(){players=players.map(p=>({name:p.name||'Jugador'}));scores={};players.forEach(p=>scores[p.name]=0);cards=shuffle([...CARDS[category]]).slice(0,20);cardIdx=0;playerIdx=0;renderCard();renderScoreboard();showScreen('game-screen');}
+function getNextCards(){const pool=CARDS[category];if(!usedIndices[category])usedIndices[category]=new Set();const used=usedIndices[category];let available=pool.map((_,i)=>i).filter(i=>!used.has(i));if(available.length<CARDS_PER_GAME){used.clear();available=pool.map((_,i)=>i);}shuffle(available);const chosen=available.slice(0,CARDS_PER_GAME);chosen.forEach(i=>used.add(i));return chosen.map(i=>pool[i]);}
+function startGame(){players=players.map(p=>({name:p.name||'Jugador'}));scores={};players.forEach(p=>scores[p.name]=0);cards=getNextCards();cardIdx=0;playerIdx=0;renderCard();renderScoreboard();showScreen('game-screen');}
 function renderCard(){document.getElementById('card-text').textContent=cards[cardIdx];document.getElementById('turn-indicator').innerHTML=`Turno de <span>${players[playerIdx].name}</span>`;document.getElementById('card-counter').textContent=`Carta ${cardIdx+1}/${cards.length}`;const c=document.getElementById('main-card');c.classList.remove('flip');void c.offsetWidth;c.classList.add('flip');}
 function renderScoreboard(){const sorted=[...players].sort((a,b)=>scores[b.name]-scores[a.name]);document.getElementById('scoreboard').innerHTML=`<p class="drink-label">¿Quién tomó? (tocá su nombre)</p><div class="drink-chips">${players.map(p=>`<button class="drink-chip" onclick="drink('${p.name}')">${p.name} 🍺</button>`).join('')}</div><div class="scores-list">${sorted.map(p=>`<div class="score-row"><span class="score-name">${p.name}</span><span class="score-count">${scores[p.name]} tragos</span></div>`).join('')}</div>`;}
 function drink(name){scores[name]=(scores[name]||0)+1;renderScoreboard();}
 function nextCard(){cardIdx++;playerIdx=(playerIdx+1)%players.length;if(cardIdx>=cards.length){endGame();return;}renderCard();}
-function endGame(){const sorted=[...players].sort((a,b)=>scores[b.name]-scores[a.name]);document.getElementById('winner-name').textContent=`🍺 ${sorted[0].name} (${scores[sorted[0].name]} tragos)`;document.getElementById('final-scores').innerHTML=sorted.map((p,i)=>`<div class="final-score-row"><span class="rank">${['🥇','🥈','🥉'][i]||i+1+'.'}</span><span>${p.name}</span><span>${scores[p.name]} tragos</span></div>`).join('');showScreen('end-screen');}
-function restartGame(){startGame();}
+function endGame(){const sorted=[...players].sort((a,b)=>scores[b.name]-scores[a.name]);document.getElementById('winner-name').textContent=`🍺 ${sorted[0].name} (${scores[sorted[0].name]} tragos)`;document.getElementById('final-scores').innerHTML=sorted.map((p,i)=>`<div class="final-score-row"><span class="rank">${['🥇','🥈','🥉'][i]||(i+1)+'.'}</span><span>${p.name}</span><span>${scores[p.name]} tragos</span></div>`).join('');const remaining=CARDS[category].length-(usedIndices[category]?usedIndices[category].size:0);document.getElementById('remaining-tag').textContent=remaining>0?`Quedan ${remaining} preguntas nuevas para seguir jugando`:'Completaron todas las preguntas — la próxima partida las rota';showScreen('end-screen');}
+function restartGame(){scores={};players.forEach(p=>scores[p.name]=0);cards=getNextCards();cardIdx=0;playerIdx=0;renderCard();renderScoreboard();showScreen('game-screen');}
+function newGame(){usedIndices={};players=[];showScreen('setup-screen');addPlayer();addPlayer();}
 </script>
 </body>
 </html>
