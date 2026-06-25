@@ -89,17 +89,6 @@ function renderCard() {
   cardEl.classList.add('flip');
 }
 
-function renderScoreboard() {
-  const sb = document.getElementById('scoreboard');
-  const sorted = [...players].sort((a, b) => scores[b.name] - scores[a.name]);
-  sb.innerHTML = sorted.map(p =>
-    `<div class="score-row">
-      <span class="score-name">${p.name}</span>
-      <span class="score-drinks">${'🍺'.repeat(scores[p.name] || 0)}${scores[p.name] === 0 ? '—' : ''}</span>
-    </div>`
-  ).join('');
-}
-
 function nextCard() {
   currentCardIndex++;
   currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
@@ -137,20 +126,6 @@ function restartGame() {
   startGame();
 }
 
-document.addEventListener('click', (e) => {
-  if (e.target.classList.contains('drink-chip')) {
-    const name = e.target.dataset.player;
-    e.target.classList.toggle('selected');
-    if (e.target.classList.contains('selected')) {
-      scores[name] = (scores[name] || 0) + 1;
-    } else {
-      scores[name] = Math.max(0, (scores[name] || 0) - 1);
-    }
-    renderScoreboard();
-  }
-});
-
-// Add drink chips to scoreboard for easy tapping
 function renderScoreboard() {
   const sb = document.getElementById('scoreboard');
   const sorted = [...players].sort((a, b) => scores[b.name] - scores[a.name]);

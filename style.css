@@ -36,7 +36,6 @@ body {
   overflow: hidden;
 }
 
-/* ── Screens ─────────────────────────────────── */
 .screen {
   display: none;
   flex-direction: column;
@@ -51,7 +50,6 @@ body {
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Home ─────────────────────────────────────── */
 #home-screen {
   align-items: center;
   justify-content: center;
@@ -124,7 +122,6 @@ body {
   display: block;
 }
 
-/* ── Setup ─────────────────────────────────────── */
 #setup-screen h2 {
   font-size: 1.6rem;
   font-weight: 800;
@@ -253,7 +250,6 @@ body {
 }
 .secondary-btn:hover { background: #22222e; }
 
-/* ── Game ─────────────────────────────────────── */
 .game-header {
   display: flex;
   align-items: center;
@@ -339,7 +335,6 @@ body {
 }
 .drink-prompt strong { color: var(--accent2); }
 
-/* Scoreboard */
 .scoreboard {
   background: var(--surface);
   border-radius: 14px;
@@ -415,7 +410,6 @@ body {
 
 .game-actions { width: 100%; }
 
-/* ── End Screen ──────────────────────────────── */
 #end-screen {
   justify-content: center;
   align-items: center;
@@ -471,7 +465,6 @@ body {
   width: 100%;
 }
 
-/* ── Mobile tweaks ────────────────────────────── */
 @media (max-width: 380px) {
   .card-text { font-size: 1.1rem; }
   #home-screen h1 { font-size: 1.7rem; }
