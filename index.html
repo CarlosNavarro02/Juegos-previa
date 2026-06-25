@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Juegos de Previa</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <div id="home-screen" class="screen active">
+      <div class="logo">🍻</div>
+      <h1>Juegos de Previa</h1>
+      <p class="subtitle">Elige tu juego</p>
+      <div class="game-grid">
+        <button class="game-card" onclick="goToGame('yo-nunca')">
+          <span class="game-icon">🔥</span>
+          <span class="game-name">Yo Nunca</span>
+          <span class="game-desc">Picante</span>
+        </button>
+        <button class="game-card locked">
+          <span class="game-icon">🎲</span>
+          <span class="game-name">Verdad o Reto</span>
+          <span class="game-desc">Próximamente</span>
+        </button>
+        <button class="game-card locked">
+          <span class="game-icon">🃏</span>
+          <span class="game-name">Carta de Tragos</span>
+          <span class="game-desc">Próximamente</span>
+        </button>
+      </div>
+    </div>
+
+    <div id="setup-screen" class="screen">
+      <button class="back-btn" onclick="goHome()">← Volver</button>
+      <h2>Yo Nunca 🔥</h2>
+      <p class="setup-subtitle">¿Cuántos jugadores son?</p>
+      <div class="players-setup">
+        <div id="player-list"></div>
+        <button class="add-player-btn" onclick="addPlayer()">+ Agregar jugador</button>
+      </div>
+      <div class="category-select">
+        <p>Nivel de picante:</p>
+        <div class="category-btns">
+          <button class="cat-btn active" data-cat="medium" onclick="selectCategory(this)">🌶️ Atrevido</button>
+          <button class="cat-btn" data-cat="hot" onclick="selectCategory(this)">🔥 Muy Picante</button>
+          <button class="cat-btn" data-cat="extreme" onclick="selectCategory(this)">💀 Extremo</button>
+        </div>
+      </div>
+      <button class="start-btn" onclick="startGame()">¡Empezar!</button>
+    </div>
+
+    <div id="game-screen" class="screen">
+      <div class="game-header">
+        <button class="back-btn" onclick="goHome()">✕</button>
+        <div class="card-counter" id="card-counter">Carta 1/30</div>
+      </div>
+      <div class="turn-indicator" id="turn-indicator">Turno de <span id="current-player">Carlos</span></div>
+      <div class="card-area">
+        <div class="card" id="main-card">
+          <div class="card-label">YO NUNCA...</div>
+          <div class="card-text" id="card-text">Cargando...</div>
+        </div>
+      </div>
+      <div class="drink-prompt" id="drink-prompt">
+        ¿Alguna vez lo hiciste? <strong>¡Tomá!</strong> 🍺
+      </div>
+      <div class="scoreboard" id="scoreboard"></div>
+      <div class="game-actions">
+        <button class="next-btn" onclick="nextCard()">Siguiente →</button>
+      </div>
+    </div>
+
+    <div id="end-screen" class="screen">
+      <div class="end-content">
+        <div class="trophy">🏆</div>
+        <h2>¡Juego terminado!</h2>
+        <p>El más picante fue:</p>
+        <div class="winner" id="winner-name"></div>
+        <div class="final-scores" id="final-scores"></div>
+        <div class="end-actions">
+          <button class="start-btn" onclick="restartGame()">Jugar de nuevo</button>
+          <button class="secondary-btn" onclick="goHome()">Menú principal</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="yo-nunca.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

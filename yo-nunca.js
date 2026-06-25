@@ -1,0 +1,77 @@
+const CARDS = {
+  medium: [
+    "mandé un mensaje de texto al ex a las 3am",
+    "me hice el dormido para no contestar una llamada",
+    "besé a alguien en una previa sin saber su nombre",
+    "mentí sobre mi edad",
+    "usé la foto de otro en mis redes sociales",
+    "lloré viendo una peli de Disney",
+    "stalkié el Instagram de alguien durante más de una hora",
+    "mandé un audio de voz por error a quien no era",
+    "hice ghosting a alguien que me gustaba",
+    "dije 'ya llego' cuando ni me había bañado",
+    "borré un mensaje enviado y lo reescribí cinco veces",
+    "tuve un crush con el/la mejor amigo/a de mi amigo/a",
+    "mentí que estaba enfermo para no salir",
+    "le escribí a alguien cuando estaba borracho y lo negué al otro día",
+    "besé a dos personas en la misma noche",
+    "tuve un sueño con alguien de este grupo",
+    "revisé el teléfono de mi pareja sin permiso",
+    "me hice el interesante con alguien que me gustaba",
+    "terminé algo con alguien solo por WhatsApp",
+    "tuve un crush secreto con alguien de este grupo",
+  ],
+  hot: [
+    "mandé una foto picante por error",
+    "tuve relaciones en la casa de mis viejos",
+    "tuve más de tres parejas al mismo tiempo",
+    "hice el lindo borracho para que alguien me lleve a casa",
+    "me desperté sin saber dónde estaba",
+    "salí sin ropa interior porque no encontraba limpia",
+    "tuve relaciones con alguien de un grupo de amigos compartido",
+    "mandé una foto de mí mismo/a que no debía",
+    "besé a alguien de este grupo",
+    "tuve relaciones en un lugar público",
+    "me bañé con alguien sin que fuera mi pareja",
+    "tuve relaciones con alguien más de diez años mayor que yo",
+    "usé una excusa ridícula para quedarme a dormir en la casa de alguien",
+    "tuve sentimientos por alguien de este grupo",
+    "mentí sobre cuántas personas besé",
+    "tuve una noche de una sola vez y lo repetí",
+    "alguien me atrapó mirando su cuerpo en este grupo",
+    "me gustó alguien de este grupo más de lo que admití",
+    "tuve relaciones con alguien que conocí ese mismo día",
+    "me arrepentí de alguien al día siguiente",
+  ],
+  extreme: [
+    "tuve una fantasía con alguien de este grupo",
+    "tuve relaciones siendo pareja de otra persona",
+    "mandé fotos íntimas que luego lamenté",
+    "tuve más de cinco parejas en el mismo mes",
+    "hice algo sexual en un lugar donde me podían ver",
+    "tuve relaciones con dos personas del mismo grupo de amigos",
+    "me atraparon en una situación comprometida",
+    "tuve una cita triple sin que los otros supieran",
+    "hice un striptease aunque sea para mí solo/a",
+    "tuve relaciones y después dije que no pasó nada",
+    "usé a alguien para ponerle celos a otro",
+    "tuve relaciones en la misma cama donde había alguien más durmiendo",
+    "mandé un mensaje sexual sin querer a un familiar",
+    "tuve sentimientos por la pareja de un amigo/a",
+    "hice algo en una fiesta que prometí nunca contar",
+    "tuve relaciones con alguien cuyo nombre no recuerdo",
+    "mentí sobre dónde estaba para estar con alguien",
+    "tuve un rol o juego de fantasía",
+    "alguien me vio en una situación muy comprometida y nunca lo hablamos",
+    "hice algo de lo que me arrepiento cada vez que lo recuerdo",
+  ],
+};
+
+function getCards(category) {
+  const pool = [...CARDS[category]];
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return pool.slice(0, 20);
+}
