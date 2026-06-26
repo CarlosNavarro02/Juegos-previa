@@ -1652,9 +1652,9 @@ function spHandleCallback(code){
       if(topTracks.items){
         topTracks.items.forEach(function(t){
           tracks.push({
+            id: t.id || null,
             title: t.name,
             artist: t.artists ? t.artists.map(function(a){return a.name;}).join(', ') : '',
-            previewUrl: t.preview_url || null,
             albumImg: (t.album && t.album.images && t.album.images.length > 0) ? t.album.images[0].url : null
           });
         });
@@ -1806,6 +1806,11 @@ function spUpdateRoundTag(){
   if(tag) tag.textContent = 'Ronda '+(spRound+1)+' / '+spTotalRounds;
 }
 
+function spEmbedHtml(trackId){
+  if(!trackId) return '<div style="font-size:.75rem;color:var(--muted);text-align:center;padding:6px;">Preview no disponible</div>';
+  return '<iframe style="border-radius:10px;margin-top:10px;" src="https://open.spotify.com/embed/track/'+encodeURIComponent(trackId)+'?utm_source=generator&theme=0" width="100%" height="80" frameborder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>';
+}
+
 /* --- Audio --- */
 function spTogglePlay(){
   if(!spCurrentSong || !spCurrentSong.track.previewUrl){
@@ -1871,11 +1876,23 @@ function spRoundQuienEs(){
     document.getElementById('sp-game-content').innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted);">Ningún jugador tiene canciones conectadas.</div>';
     return;
   }
+  // Collect all tracks that belong to ONLY ONE player (exclude shared songs)
+  var trackOwnerMap = {};
+  eligible.forEach(function(p){
+    p.tracks.forEach(function(t){
+      var key = t.title.toLowerCase()+'|'+t.artist.toLowerCase();
+      trackOwnerMap[key] = (trackOwnerMap[key] || 0) + 1;
+    });
+  });
   var ownerIdx = Math.floor(Math.random() * eligible.length);
   var owner = eligible[ownerIdx];
   var ownerGlobalIdx = spPlayers.indexOf(owner);
-  var trackIdx = Math.floor(Math.random() * owner.tracks.length);
-  var track = owner.tracks[trackIdx];
+  var uniqueTracks = owner.tracks.filter(function(t){
+    var key = t.title.toLowerCase()+'|'+t.artist.toLowerCase();
+    return trackOwnerMap[key] === 1;
+  });
+  var pool = uniqueTracks.length > 0 ? uniqueTracks : owner.tracks;
+  var track = pool[Math.floor(Math.random() * pool.length)];
   spCurrentSong = {track:track, ownerIdx:ownerGlobalIdx};
   spVotes = {};
 
@@ -1972,7 +1989,8 @@ function spRevealQuienEs(){
   var revealBtn = document.getElementById('sp-reveal-btn');
   if(revealBtn){
     revealBtn.outerHTML = ownerLabel + drinkMsg +
-      '<button class="sp-action-btn" onclick="spRound++;spRoundQuienEs()">Siguiente →</button>';
+      spEmbedHtml(spCurrentSong.track.id) +
+      '<button class="sp-action-btn" style="margin-top:10px;" onclick="spRound++;spRoundQuienEs()">Siguiente →</button>';
   }
 }
 
@@ -2370,18 +2388,14 @@ function spAdivinaShowSong(singerIdx){
   var pick = spAdivinaCurrent;
   if(!pick) return;
 
-  var albumImg = pick.track.albumImg
-    ? '<img src="'+eh(pick.track.albumImg)+'" style="width:100px;height:100px;border-radius:12px;object-fit:cover;margin-bottom:10px;box-shadow:0 4px 16px #0006;" />'
-    : '<div style="font-size:3.5rem;margin-bottom:10px;">🎵</div>';
-
   var secs = 60;
   var html =
     '<div style="text-align:center;">' +
-    albumImg +
-    '<div style="font-size:1.3rem;font-weight:900;margin-bottom:4px;">'+eh(pick.track.title)+'</div>' +
-    '<div style="font-size:.9rem;color:var(--muted);margin-bottom:16px;">'+eh(pick.track.artist)+'</div>' +
-    '<div style="font-size:.75rem;color:#ffaa00;margin-bottom:8px;">¡Cantá, tararéala o describíla! No digas el título ni el artista.</div>' +
-    '<div id="sp-adivina-timer" style="font-size:3rem;font-weight:900;color:var(--sp-green);margin-bottom:16px;">60</div>' +
+    '<div style="font-size:1.2rem;font-weight:900;margin-bottom:2px;">'+eh(pick.track.title)+'</div>' +
+    '<div style="font-size:.85rem;color:var(--muted);margin-bottom:4px;">'+eh(pick.track.artist)+'</div>' +
+    spEmbedHtml(pick.track.id) +
+    '<div style="font-size:.72rem;color:#ffaa00;margin:10px 0 6px;">¡Cantá, tararéala o describíla! No digas el título ni el artista.</div>' +
+    '<div id="sp-adivina-timer" style="font-size:2.5rem;font-weight:900;color:var(--sp-green);margin-bottom:12px;">60</div>' +
     '<button class="sp-action-btn" onclick="spAdivinaGuessed('+singerIdx+')">¡Alguien adivinó! 🎉</button>' +
     '<br><button class="sp-action-btn secondary" style="margin-top:8px;font-size:.85rem;" onclick="spAdivinaNoGuess()">Nadie adivinó →</button>' +
     '</div>';
