@@ -413,14 +413,8 @@ input:checked+.toggle-slider:before { transform:translateX(20px); }
   <div id="sp-url-warn" style="display:none;background:#2a1a00;border:1px solid #ffaa00;border-radius:10px;padding:10px 12px;font-size:.8rem;color:#ffaa00;margin-bottom:10px;">
     ⚠️ Detectamos que estás usando un preview de HTML. El OAuth de Spotify puede no funcionar correctamente. Usá la URL de GitHub Pages directamente.
   </div>
-  <div class="setup-section">
-    <div class="setup-section-label">Spotify Client ID</div>
-    <div style="display:flex;gap:8px;margin-bottom:6px;">
-      <input class="sp-clientid-input" id="sp-clientid-inp" type="text" placeholder="Pegá tu Client ID aquí" />
-      <button class="sp-clientid-btn" onclick="spSaveClientId()">Guardar</button>
-    </div>
-    <div id="sp-clientid-status" style="font-size:.78rem;color:var(--muted);margin-bottom:4px;"></div>
-  </div>
+  <input type="hidden" id="sp-clientid-inp" />
+  <div id="sp-clientid-status" style="display:none;"></div>
   <div class="setup-section">
     <div class="setup-section-label">Jugadores</div>
     <div id="sp-players-list"></div>
@@ -1659,7 +1653,7 @@ function goToSpotifyGame(){
       spPlayers = [{name:'Jugador 1',token:null,profile:null,tracks:[],artists:[]},{name:'Jugador 2',token:null,profile:null,tracks:[],artists:[]}];
     }
   }
-  spClientId = localStorage.getItem('sp_client_id') || '';
+  spClientId = localStorage.getItem('sp_client_id') || 'd9fbe2bbc1a048f0be777e0edb516d42';
   showScreen('spotify-setup-screen');
   renderSpSetup();
   var warn = document.getElementById('sp-url-warn');
