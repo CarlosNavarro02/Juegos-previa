@@ -1636,54 +1636,72 @@ function spHandleCallback(code){
 
     var headers = {'Authorization':'Bearer '+token};
     var p1 = fetch('https://api.spotify.com/v1/me', {headers:headers}).then(function(r){return r.json();});
-    var p2 = fetch('https://api.spotify.com/v1/me/top/tracks?limit=20&time_range=medium_term', {headers:headers}).then(function(r){return r.json();});
+    var p2 = fetch('https://api.spotify.com/v1/me/tracks?limit=50', {headers:headers}).then(function(r){return r.json();});
     var p3 = fetch('https://api.spotify.com/v1/me/top/artists?limit=10', {headers:headers}).then(function(r){return r.json();});
+    var p4 = fetch('https://api.spotify.com/v1/me/playlists?limit=20', {headers:headers}).then(function(r){return r.json();});
 
-    Promise.all([p1,p2,p3]).then(function(results){
+    Promise.all([p1,p2,p3,p4]).then(function(results){
       var me = results[0];
-      var topTracks = results[1];
+      var liked = results[1];
       var topArtists = results[2];
+      var playlists = results[3];
 
       var profile = {
         display_name: me.display_name || spPlayers[playerIdx].name,
         image: (me.images && me.images.length > 0) ? me.images[me.images.length-1].url : null
       };
-      var tracks = [];
-      if(topTracks.items){
-        topTracks.items.forEach(function(t){
-          tracks.push({
-            id: t.id || null,
-            title: t.name,
-            artist: t.artists ? t.artists.map(function(a){return a.name;}).join(', ') : '',
-            albumImg: (t.album && t.album.images && t.album.images.length > 0) ? t.album.images[0].url : null
-          });
-        });
-      }
-      var artists = [];
-      if(topArtists.items){
-        topArtists.items.forEach(function(a){
-          artists.push({name:a.name, genres:a.genres||[]});
-        });
+
+      var trackMap = {};
+      function addTrack(t){
+        if(!t || !t.id || trackMap[t.id]) return;
+        trackMap[t.id] = {
+          id: t.id,
+          title: t.name,
+          artist: t.artists ? t.artists.map(function(a){return a.name;}).join(', ') : '',
+          albumImg: (t.album && t.album.images && t.album.images.length > 0) ? t.album.images[0].url : null
+        };
       }
 
-      spPlayers[playerIdx] = {
-        name: spPlayers[playerIdx].name,
-        token: token,
-        profile: profile,
-        tracks: tracks,
-        artists: artists
-      };
+      if(liked.items){
+        liked.items.forEach(function(item){ if(item && item.track) addTrack(item.track); });
+      }
 
-      showScreen('spotify-setup-screen');
-      renderSpSetup();
+      var playlistItems = (playlists.items || []).filter(function(pl){ return pl && pl.id; }).slice(0,10);
+      var playlistFetches = playlistItems.map(function(pl){
+        return fetch('https://api.spotify.com/v1/playlists/'+pl.id+'/tracks?limit=20', {headers:headers})
+          .then(function(r){return r.json();}).catch(function(){return null;});
+      });
+
+      Promise.all(playlistFetches).then(function(plResults){
+        plResults.forEach(function(res){
+          if(!res || !res.items) return;
+          res.items.forEach(function(item){ if(item && item.track) addTrack(item.track); });
+        });
+
+        var tracks = Object.keys(trackMap).map(function(id){ return trackMap[id]; });
+        var artists = [];
+        if(topArtists.items){
+          topArtists.items.forEach(function(a){ artists.push({name:a.name, genres:a.genres||[]}); });
+        }
+
+        spPlayers[playerIdx] = {
+          name: spPlayers[playerIdx].name,
+          token: token,
+          profile: profile,
+          tracks: tracks,
+          artists: artists
+        };
+
+        showScreen('spotify-setup-screen');
+        renderSpSetup();
+      }).catch(function(){
+        showScreen('spotify-setup-screen');
+        renderSpSetup();
+      });
     }).catch(function(){
       showScreen('spotify-setup-screen');
       renderSpSetup();
     });
-  }).catch(function(){
-    showScreen('spotify-setup-screen');
-    renderSpSetup();
-  });
 }
 
 function goToSpotifyGame(){
