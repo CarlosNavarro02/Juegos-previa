@@ -467,7 +467,10 @@ input:checked+.toggle-slider:before { transform:translateX(20px); }
   <div class="sp-game-inner">
     <div class="sp-game-header">
       <button class="back-btn" onclick="spConfirmExit()">✕</button>
-      <div id="sp-round-tag" style="font-size:.8rem;color:var(--muted);">Ronda 1</div>
+      <div style="text-align:right;">
+        <div id="sp-mode-label" style="font-size:.72rem;color:var(--sp-green);font-weight:700;"></div>
+        <div id="sp-round-tag" style="font-size:.8rem;color:var(--muted);">Ronda 1</div>
+      </div>
     </div>
     <div id="sp-game-content"></div>
   </div>
@@ -1788,6 +1791,9 @@ function spStartGame(){
   if(spAdivinaTimer){ clearInterval(spAdivinaTimer); spAdivinaTimer = null; }
   spPlayers.forEach(function(p){ spScores[p.name] = 0; });
   showScreen('spotify-game-screen');
+  var modeLabels = {'quien-es':'🎧 ¿De quién es?','completa':'🎤 Completá la letra','match':'💘 Match Musical','ruleta':'🎰 Ruleta Musical','adivina':'🎤 Adivina la canción'};
+  var lbl = document.getElementById('sp-mode-label');
+  if(lbl) lbl.textContent = modeLabels[spGameMode] || '';
   if(spGameMode === 'quien-es') spRoundQuienEs();
   else if(spGameMode === 'completa') spRoundCompleta();
   else if(spGameMode === 'match'){ spBuildMatchPairs(); spRoundMatch(); }
@@ -1877,7 +1883,7 @@ function spRoundQuienEs(){
   var wordCount = words.length;
   var letterRows = words.map(function(w){
     return '<div style="display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap;margin-bottom:4px;">' +
-      w.split('').map(function(){ return '<span style="display:inline-block;width:18px;height:22px;border-bottom:2px solid var(--sp-green);"></span>'; }).join('') +
+      w.split('').map(function(){ return '<span style="display:inline-block;width:22px;height:30px;border-bottom:3px solid var(--sp-green);margin:0 2px;"></span>'; }).join('') +
       '</div>';
   }).join('');
 
