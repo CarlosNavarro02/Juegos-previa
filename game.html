@@ -2227,11 +2227,8 @@ function spDoSpin(){
       });
       if(spinEl) spinEl.textContent = '¡' + spPlayers[idx].name + '!';
       var target = spPlayers[idx];
-      var tracksWithPreview = (target.tracks||[]).filter(function(t){ return t.previewUrl; });
       var trackToPlay = null;
-      if(tracksWithPreview.length > 0){
-        trackToPlay = tracksWithPreview[Math.floor(Math.random()*tracksWithPreview.length)];
-      } else if(target.tracks && target.tracks.length > 0){
+      if(target.tracks && target.tracks.length > 0){
         trackToPlay = target.tracks[Math.floor(Math.random()*target.tracks.length)];
       }
       if(trackToPlay){
@@ -2249,7 +2246,6 @@ function spDoSpin(){
 }
 
 function spShowRuletaSong(track, player){
-  spStopAudio();
   spCurrentSong = {track:track, ownerIdx:spRuletaTarget};
 
   var coverHtml = track.albumImg
@@ -2257,20 +2253,15 @@ function spShowRuletaSong(track, player){
     : '<div class="sp-song-cover" style="display:flex;align-items:center;justify-content:center;font-size:2rem;">🎵</div>';
 
   var html = '<div class="sp-audio-card">'+
-    '<div style="display:flex;gap:14px;align-items:center;margin-bottom:12px;">'+
+    '<div style="display:flex;gap:14px;align-items:center;margin-bottom:4px;">'+
       coverHtml+
       '<div style="flex:1;">'+
         '<div style="font-weight:700;font-size:.92rem;margin-bottom:2px;">'+eh(track.title)+'</div>'+
-        '<div style="font-size:.8rem;color:var(--muted);margin-bottom:8px;">'+eh(track.artist)+'</div>'+
-        '<div style="display:flex;align-items:center;gap:10px;">'+
-          '<button class="sp-play-btn" id="sp-play-btn" onclick="spTogglePlay()">▶</button>'+
-          '<div style="flex:1;"><div style="font-size:.7rem;color:var(--muted);margin-bottom:4px;">Preview 30s</div>'+
-          '<div class="sp-progress-wrap"><div class="sp-progress-bar" id="sp-prog-bar"></div></div>'+
-          '</div>'+
-        '</div>'+
+        '<div style="font-size:.8rem;color:var(--muted);">'+eh(track.artist)+'</div>'+
       '</div>'+
     '</div>'+
-    '<div style="font-size:.82rem;color:var(--muted);margin-bottom:8px;text-align:center;">El grupo vota el gusto de <strong style="color:var(--text)">'+eh(player.name)+'</strong></div>'+
+    spEmbedHtml(track.id)+
+    '<div style="font-size:.82rem;color:var(--muted);margin-bottom:8px;text-align:center;margin-top:12px;">El grupo vota el gusto de <strong style="color:var(--text)">'+eh(player.name)+'</strong></div>'+
     '<div class="sp-rating-btns">'+
       '<button class="sp-rating-btn fire" onclick="spRuletaRate(\'fire\')"><span style="font-size:1.5rem;">🔥</span><span>Buen gusto</span></button>'+
       '<button class="sp-rating-btn meh" onclick="spRuletaRate(\'meh\')"><span style="font-size:1.5rem;">😐</span><span>Regular</span></button>'+
@@ -2303,8 +2294,6 @@ function spRuletaRate(rating){
       '<button class="sp-action-btn" onclick="spRound++;spRoundRuleta()">Siguiente →</button></div>';
   }
   document.querySelectorAll('.sp-rating-btn').forEach(function(b){ b.disabled=true; });
-  var playBtn = document.getElementById('sp-play-btn');
-  if(playBtn) playBtn.disabled=true;
 }
 
 /* --- End --- */
