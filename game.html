@@ -1467,7 +1467,7 @@ function ea(s){
 }
 
 /* ===== SPOTIFY GAMES ===== */
-var spClientId = localStorage.getItem('sp_client_id') || '';
+var spClientId = localStorage.getItem('sp_client_id') || 'd9fbe2bbc1a048f0be777e0edb516d42';
 var spPlayers = [];
 var spGameMode = '';
 var spScores = {};
@@ -1578,7 +1578,7 @@ function spHandleCallback(code){
   var playerIdx = spConnectingState.playerIdx;
   var redirectUri = spConnectingState.redirectUri;
   var savedPlayers = spConnectingState.players || [];
-  var clientId = localStorage.getItem('sp_client_id') || '';
+  var clientId = localStorage.getItem('sp_client_id') || 'd9fbe2bbc1a048f0be777e0edb516d42';
 
   var body = [
     'grant_type=authorization_code',
