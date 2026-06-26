@@ -1874,29 +1874,31 @@ function spRoundQuienEs(){
   spVotes = {};
 
   var words = track.title.split(' ');
-  var letterHint = words.map(function(w){ return w.replace(/\S/g,'▢').split('').join(' '); }).join('   ');
+  var wordCount = words.length;
+  var letterRows = words.map(function(w){
+    return '<div style="display:flex;gap:6px;align-items:center;justify-content:center;flex-wrap:wrap;margin-bottom:4px;">' +
+      w.split('').map(function(){ return '<span style="display:inline-block;width:18px;height:22px;border-bottom:2px solid var(--sp-green);"></span>'; }).join('') +
+      '</div>';
+  }).join('');
 
   var coverHtml = track.albumImg
-    ? '<img class="sp-song-cover" id="sp-cover-img" src="'+eh(track.albumImg)+'" alt="Cover" style="filter:blur(18px);transition:filter .6s;"/>'
-    : '<div class="sp-song-cover" id="sp-cover-img" style="display:flex;align-items:center;justify-content:center;font-size:2rem;filter:blur(18px);transition:filter .6s;">🎵</div>';
+    ? '<img id="sp-cover-img" src="'+eh(track.albumImg)+'" alt="Cover" style="width:110px;height:110px;border-radius:12px;object-fit:cover;filter:blur(18px);transition:filter .6s;display:block;margin:0 auto 12px;"/>'
+    : '<div id="sp-cover-img" style="width:110px;height:110px;border-radius:12px;background:#1a2a1a;display:flex;align-items:center;justify-content:center;font-size:2.5rem;filter:blur(18px);transition:filter .6s;margin:0 auto 12px;">🎵</div>';
 
   var chips = spPlayers.map(function(p,i){
     return '<button class="sp-vote-chip" id="sp-chip-'+i+'" onclick="spVoteQuienEs('+i+',this)">'+eh(p.name)+'</button>';
   }).join('');
 
   var html =
-    '<div style="margin-bottom:12px;">'+
-    '<div style="font-size:.8rem;color:var(--muted);margin-bottom:8px;text-align:center;">¿De quién es esta canción?</div>'+
-    '<div class="sp-audio-card">'+
-      '<div style="display:flex;gap:14px;align-items:center;margin-bottom:12px;">'+
-        coverHtml+
-        '<div style="flex:1;">'+
-          '<div style="font-size:.7rem;color:var(--muted);margin-bottom:6px;">Pista — letras del título:</div>'+
-          '<div id="sp-letter-hint" style="font-size:.82rem;font-weight:700;line-height:1.8;word-break:break-all;color:var(--sp-green);">'+letterHint+'</div>'+
-        '</div>'+
-      '</div>'+
-      '<button id="sp-hint-artist-btn" class="sp-action-btn secondary" style="width:100%;font-size:.85rem;padding:8px;" onclick="spShowArtistHint()">💡 Pista: ver artista</button>'+
-      '<div id="sp-artist-hint" style="display:none;text-align:center;margin-top:8px;font-size:.9rem;color:var(--muted);"></div>'+
+    '<div>'+
+    '<div style="text-align:center;margin-bottom:12px;">'+
+      coverHtml+
+      '<div style="font-size:.72rem;color:var(--muted);margin-bottom:8px;">'+wordCount+' palabra'+(wordCount!==1?'s':'')+' — adiviná el título</div>'+
+      letterRows+
+    '</div>'+
+    '<div class="sp-audio-card" style="margin-bottom:10px;padding:10px 14px;">'+
+      '<button id="sp-hint-artist-btn" class="sp-action-btn secondary" style="width:100%;font-size:.85rem;padding:8px;margin:0;" onclick="spShowArtistHint()">💡 Ver pista: artista</button>'+
+      '<div id="sp-artist-hint" style="display:none;text-align:center;padding-top:8px;font-size:.9rem;color:var(--muted);"></div>'+
     '</div>'+
     '<div style="margin-bottom:10px;">'+
       '<div style="font-size:.78rem;color:var(--muted);margin-bottom:8px;">¿De quién es en Spotify?</div>'+
@@ -1927,8 +1929,13 @@ function spRevealQuienEs(){
   var cover = document.getElementById('sp-cover-img');
   if(cover) cover.style.filter = 'none';
 
-  var letterEl = document.getElementById('sp-letter-hint');
-  if(letterEl && spCurrentSong) letterEl.innerHTML = '<strong style="color:var(--text);font-size:.95rem;">'+eh(spCurrentSong.track.title)+'</strong>';
+  var titleArea = cover ? cover.parentNode : null;
+  if(titleArea && spCurrentSong){
+    var titleDiv = document.createElement('div');
+    titleDiv.style.cssText = 'text-align:center;margin-top:8px;font-size:1rem;font-weight:800;';
+    titleDiv.textContent = spCurrentSong.track.title;
+    titleArea.appendChild(titleDiv);
+  }
 
   var ownerIdx = spCurrentSong.ownerIdx;
   var selected = (spVotes.selected !== undefined) ? spVotes.selected : -1;
