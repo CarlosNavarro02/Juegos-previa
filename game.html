@@ -1702,6 +1702,10 @@ function spHandleCallback(code){
       showScreen('spotify-setup-screen');
       renderSpSetup();
     });
+  }).catch(function(){
+    showScreen('spotify-setup-screen');
+    renderSpSetup();
+  });
 }
 
 function goToSpotifyGame(){
