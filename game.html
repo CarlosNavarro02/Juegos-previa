@@ -1862,7 +1862,7 @@ function spRoundQuienEs(){
 
   var eligible = spPlayers.filter(function(p){ return p.tracks && p.tracks.length > 0; });
   if(eligible.length === 0){
-    document.getElementById('sp-game-content').innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted);">Ningun jugador tiene canciones conectadas. Volvé al setup y conecten Spotify.</div>';
+    document.getElementById('sp-game-content').innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted);">Ningún jugador tiene canciones conectadas.</div>';
     return;
   }
   var ownerIdx = Math.floor(Math.random() * eligible.length);
@@ -1873,36 +1873,48 @@ function spRoundQuienEs(){
   spCurrentSong = {track:track, ownerIdx:ownerGlobalIdx};
   spVotes = {};
 
+  var words = track.title.split(' ');
+  var letterHint = words.map(function(w){ return w.replace(/\S/g,'▢').split('').join(' '); }).join('   ');
+
   var coverHtml = track.albumImg
-    ? '<img class="sp-song-cover sp-song-hidden" id="sp-cover-img" src="'+eh(track.albumImg)+'" alt="Cover"/>'
-    : '<div class="sp-song-cover sp-song-hidden" id="sp-cover-img" style="display:flex;align-items:center;justify-content:center;font-size:2rem;">🎵</div>';
+    ? '<img class="sp-song-cover" id="sp-cover-img" src="'+eh(track.albumImg)+'" alt="Cover" style="filter:blur(18px);transition:filter .6s;"/>'
+    : '<div class="sp-song-cover" id="sp-cover-img" style="display:flex;align-items:center;justify-content:center;font-size:2rem;filter:blur(18px);transition:filter .6s;">🎵</div>';
 
   var chips = spPlayers.map(function(p,i){
     return '<button class="sp-vote-chip" id="sp-chip-'+i+'" onclick="spVoteQuienEs('+i+',this)">'+eh(p.name)+'</button>';
   }).join('');
 
-  var html = '<div style="margin-bottom:12px;">'+
+  var html =
+    '<div style="margin-bottom:12px;">'+
     '<div style="font-size:.8rem;color:var(--muted);margin-bottom:8px;text-align:center;">¿De quién es esta canción?</div>'+
     '<div class="sp-audio-card">'+
-      '<div style="display:flex;gap:14px;align-items:center;">'+
+      '<div style="display:flex;gap:14px;align-items:center;margin-bottom:12px;">'+
         coverHtml+
         '<div style="flex:1;">'+
-          '<div id="sp-song-title" class="sp-song-hidden" style="font-weight:700;font-size:.95rem;margin-bottom:4px;">'+eh(track.title)+'</div>'+
-          '<div id="sp-song-artist" class="sp-song-hidden" style="font-size:.8rem;color:var(--muted);">'+eh(track.artist)+'</div>'+
-          '<div style="margin-top:10px;display:flex;align-items:center;gap:10px;">'+
-            '<button class="sp-play-btn" id="sp-play-btn" onclick="spTogglePlay()">▶</button>'+
-            '<div style="flex:1;"><div style="font-size:.7rem;color:var(--muted);margin-bottom:4px;">Preview 30s</div>'+
-            '<div class="sp-progress-wrap"><div class="sp-progress-bar" id="sp-prog-bar"></div></div>'+
-            '</div>'+
-          '</div>'+
+          '<div style="font-size:.7rem;color:var(--muted);margin-bottom:6px;">Pista — letras del título:</div>'+
+          '<div id="sp-letter-hint" style="font-size:.82rem;font-weight:700;line-height:1.8;word-break:break-all;color:var(--sp-green);">'+letterHint+'</div>'+
         '</div>'+
       '</div>'+
+      '<button id="sp-hint-artist-btn" class="sp-action-btn secondary" style="width:100%;font-size:.85rem;padding:8px;" onclick="spShowArtistHint()">💡 Pista: ver artista</button>'+
+      '<div id="sp-artist-hint" style="display:none;text-align:center;margin-top:8px;font-size:.9rem;color:var(--muted);"></div>'+
     '</div>'+
-    '<div style="margin-bottom:10px;"><div style="font-size:.78rem;color:var(--muted);margin-bottom:8px;">¿De quién es?</div>'+
-    '<div style="display:flex;flex-wrap:wrap;gap:8px;">'+chips+'</div></div>'+
-    '<button class="sp-action-btn" onclick="spRevealQuienEs()">Revelar 👀</button>'+
+    '<div style="margin-bottom:10px;">'+
+      '<div style="font-size:.78rem;color:var(--muted);margin-bottom:8px;">¿De quién es en Spotify?</div>'+
+      '<div style="display:flex;flex-wrap:wrap;gap:8px;">'+chips+'</div>'+
+    '</div>'+
+    '<button class="sp-action-btn" id="sp-reveal-btn" onclick="spRevealQuienEs()">Revelar 👀</button>'+
     '</div>';
   document.getElementById('sp-game-content').innerHTML = html;
+}
+
+function spShowArtistHint(){
+  var btn = document.getElementById('sp-hint-artist-btn');
+  var hint = document.getElementById('sp-artist-hint');
+  if(btn) btn.style.display = 'none';
+  if(hint && spCurrentSong){
+    hint.style.display = 'block';
+    hint.innerHTML = '🎤 Artista: <strong style="color:var(--text)">'+eh(spCurrentSong.track.artist)+'</strong>';
+  }
 }
 
 function spVoteQuienEs(idx, btn){
@@ -1912,13 +1924,11 @@ function spVoteQuienEs(idx, btn){
 }
 
 function spRevealQuienEs(){
-  spStopAudio();
   var cover = document.getElementById('sp-cover-img');
-  var title = document.getElementById('sp-song-title');
-  var artist = document.getElementById('sp-song-artist');
-  if(cover) cover.classList.remove('sp-song-hidden');
-  if(title) title.classList.remove('sp-song-hidden');
-  if(artist) artist.classList.remove('sp-song-hidden');
+  if(cover) cover.style.filter = 'none';
+
+  var letterEl = document.getElementById('sp-letter-hint');
+  if(letterEl && spCurrentSong) letterEl.innerHTML = '<strong style="color:var(--text);font-size:.95rem;">'+eh(spCurrentSong.track.title)+'</strong>';
 
   var ownerIdx = spCurrentSong.ownerIdx;
   var selected = (spVotes.selected !== undefined) ? spVotes.selected : -1;
@@ -1928,27 +1938,27 @@ function spRevealQuienEs(){
   spPlayers.forEach(function(p,i){
     var chip = document.getElementById('sp-chip-'+i);
     if(!chip) return;
-    if(i === ownerIdx){
-      chip.classList.add('correct');
-    } else if(i === selected && !correct){
-      chip.classList.add('wrong');
-    }
+    if(i === ownerIdx) chip.classList.add('correct');
+    else if(i === selected && !correct) chip.classList.add('wrong');
     chip.classList.remove('selected');
+    chip.disabled = true;
   });
 
+  var ownerLabel = '<div style="margin-top:6px;font-size:.8rem;color:var(--sp-green);">🎵 Era de <strong>'+eh(owner.name)+'</strong></div>';
   var drinkMsg = '';
   if(correct){
-    drinkMsg = '<div style="color:var(--accent2);font-weight:700;margin-bottom:8px;">¡Correcto! 🎉 '+eh(owner.name)+' toma 1 🍺</div>';
+    drinkMsg = '<div style="color:var(--accent2);font-weight:700;margin:8px 0;">¡Correcto! 🎉 '+eh(owner.name)+' toma 1 🍺</div>';
     spScores[owner.name] = (spScores[owner.name]||0) + 1;
   } else {
     var guesserName = selected >= 0 ? spPlayers[selected].name : '';
-    drinkMsg = '<div style="color:#ef9a9a;font-weight:700;margin-bottom:8px;">Era de '+eh(owner.name)+'.'+(guesserName?' '+eh(guesserName)+' toma 1 🍺':'')+'</div>';
+    drinkMsg = '<div style="color:#ef9a9a;font-weight:700;margin:8px 0;">Era de '+eh(owner.name)+'.'+
+      (guesserName ? ' '+eh(guesserName)+' toma 1 🍺' : '')+'</div>';
     if(guesserName) spScores[guesserName] = (spScores[guesserName]||0) + 1;
   }
 
-  var revealBtn = document.querySelector('.sp-action-btn');
+  var revealBtn = document.getElementById('sp-reveal-btn');
   if(revealBtn){
-    revealBtn.outerHTML = drinkMsg+
+    revealBtn.outerHTML = ownerLabel + drinkMsg +
       '<button class="sp-action-btn" onclick="spRound++;spRoundQuienEs()">Siguiente →</button>';
   }
 }
@@ -2291,7 +2301,7 @@ function spRestartGame(){
   spStartGame();
 }
 
-/* --- Adivina la canción --- */
+/* --- Adivina la canción (Charades) --- */
 function spRoundAdivina(){
   spStopAudio();
   if(spAdivinaTimer){ clearInterval(spAdivinaTimer); spAdivinaTimer = null; }
@@ -2302,7 +2312,7 @@ function spRoundAdivina(){
   spPlayers.forEach(function(p){
     if(p.tracks){
       p.tracks.forEach(function(t){
-        if(t.previewUrl && spUsedAdivina.indexOf(t.title+'|'+t.artist) === -1){
+        if(spUsedAdivina.indexOf(t.title+'|'+t.artist) === -1){
           allTracks.push({track:t, owner:p});
         }
       });
@@ -2312,15 +2322,13 @@ function spRoundAdivina(){
   if(allTracks.length === 0){
     spUsedAdivina = [];
     spPlayers.forEach(function(p){
-      if(p.tracks) p.tracks.forEach(function(t){
-        if(t.previewUrl) allTracks.push({track:t, owner:p});
-      });
+      if(p.tracks) p.tracks.forEach(function(t){ allTracks.push({track:t, owner:p}); });
     });
   }
 
   if(allTracks.length === 0){
     document.getElementById('sp-game-content').innerHTML =
-      '<div style="text-align:center;color:var(--muted);padding:20px;line-height:1.6;">No hay canciones con preview disponibles.<br>Spotify no siempre provee previews. Probá con otras canciones.</div>' +
+      '<div style="text-align:center;color:var(--muted);padding:20px;">Ningún jugador tiene canciones en su perfil.</div>'+
       '<button class="sp-action-btn secondary" onclick="spRound++;spRoundAdivina()">Saltar →</button>';
     return;
   }
@@ -2329,17 +2337,40 @@ function spRoundAdivina(){
   spAdivinaCurrent = pick;
   spUsedAdivina.push(pick.track.title+'|'+pick.track.artist);
 
-  spPlayAudio(pick.track.previewUrl);
+  var singerIdx = spRound % spPlayers.length;
+  var singer = spPlayers[singerIdx];
 
-  var secs = 15;
   var html =
     '<div style="text-align:center;">' +
-    '<div style="font-size:2.5rem;margin-bottom:8px;">🔊</div>' +
-    '<div style="font-size:1.15rem;font-weight:800;margin-bottom:4px;">¿Adivina la canción?</div>' +
-    '<div style="font-size:.82rem;color:var(--muted);margin-bottom:20px;">Escuchá y adiviná el título o artista</div>' +
-    '<div id="sp-adivina-timer" style="font-size:4rem;font-weight:900;color:var(--sp-green);line-height:1;margin-bottom:6px;">15</div>' +
-    '<div style="font-size:.75rem;color:var(--muted);margin-bottom:20px;">segundos</div>' +
-    '<button class="sp-action-btn" onclick="spAdivinaReveal()">Revelar canción 🎤</button>' +
+    '<div style="font-size:2.5rem;margin-bottom:10px;">🎤</div>' +
+    '<div style="font-size:1.1rem;font-weight:800;margin-bottom:6px;">Turno de <span style="color:var(--sp-green)">'+eh(singer.name)+'</span></div>' +
+    '<div style="font-size:.85rem;color:var(--muted);margin-bottom:6px;line-height:1.5;">'+
+      'Vas a ver una canción. Tu misión: <strong style="color:var(--text)">cantarla, tararearla o describirla</strong> sin decir el título ni el artista.'+
+    '</div>' +
+    '<div style="font-size:.78rem;color:#ffaa00;margin-bottom:20px;">El grupo tiene que adivinar 🕵️</div>' +
+    '<button class="sp-action-btn" onclick="spAdivinaShowSong('+singerIdx+')">'+eh(singer.name)+', mirá tu canción 👀</button>' +
+    '</div>';
+  document.getElementById('sp-game-content').innerHTML = html;
+}
+
+function spAdivinaShowSong(singerIdx){
+  var pick = spAdivinaCurrent;
+  if(!pick) return;
+
+  var albumImg = pick.track.albumImg
+    ? '<img src="'+eh(pick.track.albumImg)+'" style="width:100px;height:100px;border-radius:12px;object-fit:cover;margin-bottom:10px;box-shadow:0 4px 16px #0006;" />'
+    : '<div style="font-size:3.5rem;margin-bottom:10px;">🎵</div>';
+
+  var secs = 60;
+  var html =
+    '<div style="text-align:center;">' +
+    albumImg +
+    '<div style="font-size:1.3rem;font-weight:900;margin-bottom:4px;">'+eh(pick.track.title)+'</div>' +
+    '<div style="font-size:.9rem;color:var(--muted);margin-bottom:16px;">'+eh(pick.track.artist)+'</div>' +
+    '<div style="font-size:.75rem;color:#ffaa00;margin-bottom:8px;">¡Cantá, tararéala o describíla! No digas el título ni el artista.</div>' +
+    '<div id="sp-adivina-timer" style="font-size:3rem;font-weight:900;color:var(--sp-green);margin-bottom:16px;">60</div>' +
+    '<button class="sp-action-btn" onclick="spAdivinaGuessed('+singerIdx+')">¡Alguien adivinó! 🎉</button>' +
+    '<br><button class="sp-action-btn secondary" style="margin-top:8px;font-size:.85rem;" onclick="spAdivinaNoGuess()">Nadie adivinó →</button>' +
     '</div>';
   document.getElementById('sp-game-content').innerHTML = html;
 
@@ -2348,44 +2379,51 @@ function spRoundAdivina(){
     var el = document.getElementById('sp-adivina-timer');
     if(el){
       el.textContent = secs;
-      if(secs <= 5) el.style.color = '#ef5350';
+      if(secs <= 10) el.style.color = '#ef5350';
     }
     if(secs <= 0){
       clearInterval(spAdivinaTimer);
       spAdivinaTimer = null;
-      spAdivinaReveal();
+      spAdivinaNoGuess();
     }
   }, 1000);
 }
 
-function spAdivinaReveal(){
+function spAdivinaGuessed(singerIdx){
   if(spAdivinaTimer){ clearInterval(spAdivinaTimer); spAdivinaTimer = null; }
-  spStopAudio();
   var pick = spAdivinaCurrent;
-  if(!pick) return;
 
-  var albumImg = pick.track.albumImg
-    ? '<img src="'+eh(pick.track.albumImg)+'" style="width:90px;height:90px;border-radius:10px;object-fit:cover;margin-bottom:12px;" />'
-    : '<div style="font-size:3rem;margin-bottom:12px;">🎵</div>';
-
-  var playerBtns = spPlayers.map(function(p, i){
-    return '<button class="sp-action-btn secondary sp-adivina-player-btn" onclick="spAdivinaScore('+i+',this)">'+eh(p.name)+'</button>';
+  var otherBtns = spPlayers.map(function(p, i){
+    if(i === singerIdx) return '';
+    return '<button class="sp-action-btn secondary sp-adivina-player-btn" onclick="spAdivinaScore('+i+')">'+eh(p.name)+'</button>';
   }).join('');
 
   var html =
     '<div style="text-align:center;">' +
-    albumImg +
-    '<div style="font-size:1.2rem;font-weight:900;margin-bottom:4px;">'+eh(pick.track.title)+'</div>' +
-    '<div style="font-size:.9rem;color:var(--muted);margin-bottom:6px;">'+eh(pick.track.artist)+'</div>' +
-    '<div style="font-size:.78rem;color:var(--sp-green);margin-bottom:18px;">Era de la playlist de <b>'+eh(pick.owner.name)+'</b> 🎵</div>' +
+    '<div style="font-size:1.8rem;margin-bottom:10px;">🕵️</div>' +
+    '<div style="font-size:1rem;font-weight:800;margin-bottom:4px;">'+eh(pick.track.title)+'</div>'+
+    '<div style="font-size:.85rem;color:var(--muted);margin-bottom:16px;">'+eh(pick.track.artist)+'</div>'+
     '<div style="font-size:.85rem;font-weight:600;margin-bottom:10px;">¿Quién adivinó primero?</div>' +
-    '<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:10px;">'+playerBtns+'</div>' +
-    '<button class="sp-action-btn secondary" onclick="spRound++;spRoundAdivina()">Nadie adivinó →</button>' +
+    '<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;">'+otherBtns+'</div>' +
     '</div>';
   document.getElementById('sp-game-content').innerHTML = html;
 }
 
-function spAdivinaScore(playerIdx, btn){
+function spAdivinaNoGuess(){
+  if(spAdivinaTimer){ clearInterval(spAdivinaTimer); spAdivinaTimer = null; }
+  var pick = spAdivinaCurrent;
+  var html =
+    '<div style="text-align:center;">' +
+    '<div style="font-size:1.8rem;margin-bottom:8px;">😅</div>' +
+    '<div style="font-size:.95rem;font-weight:700;margin-bottom:4px;">Nadie adivinó</div>' +
+    '<div style="font-size:.85rem;color:var(--muted);margin-bottom:4px;">Era: <strong style="color:var(--text)">'+eh(pick.track.title)+'</strong></div>' +
+    '<div style="font-size:.8rem;color:var(--muted);margin-bottom:16px;">'+eh(pick.track.artist)+'</div>' +
+    '<button class="sp-action-btn" onclick="spRound++;spRoundAdivina()">Siguiente →</button>' +
+    '</div>';
+  document.getElementById('sp-game-content').innerHTML = html;
+}
+
+function spAdivinaScore(playerIdx){
   var p = spPlayers[playerIdx];
   if(!p) return;
   spScores[p.name] = (spScores[p.name] || 0) + 1;
