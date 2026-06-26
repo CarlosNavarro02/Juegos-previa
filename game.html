@@ -450,6 +450,13 @@ input:checked+.toggle-slider:before { transform:translateX(20px); }
           <div style="font-size:.78rem;color:var(--muted);">La ruleta elige y el grupo vota</div>
         </div>
       </button>
+      <button class="sp-mode-card" onclick="spSelectMode('adivina',this)">
+        <span style="font-size:1.4rem;">🔊</span>
+        <div style="flex:1;text-align:left;">
+          <div style="font-weight:700;font-size:.95rem;">Adivina la canción</div>
+          <div style="font-size:.78rem;color:var(--muted);">Escuchá el preview y adiviná título o artista</div>
+        </div>
+      </button>
     </div>
   </div>
   <button class="sp-start-btn" id="sp-start-btn" onclick="spStartGame()" disabled>¡Empezar!</button>
@@ -1478,6 +1485,9 @@ var spMatchPairs = [];
 var spMatchRound = 0;
 var spRuletaTarget = -1;
 var spUsedLyrics = [];
+var spUsedAdivina = [];
+var spAdivinaCurrent = null;
+var spAdivinaTimer = null;
 
 var SP_LYRICS = [
   {title:'Tusa', artist:'KAROL G', line1:'Y ella sale el fin de semana', answer:'Con sus amigas porque tu no la estas llamando'},
@@ -1746,8 +1756,9 @@ function renderSpSetup(){
   if(btn){
     var connected = spPlayers.filter(function(p){ return p.token; }).length;
     var hasMode = spGameMode !== '';
-    btn.disabled = !(connected >= 2 && hasMode) && !(spGameMode === 'completa');
+    btn.disabled = !(connected >= 2 && hasMode) && !(spGameMode === 'completa') && !(spGameMode === 'adivina' && connected >= 1);
     if(spGameMode === 'completa') btn.disabled = false;
+    if(spGameMode === 'adivina' && connected >= 1) btn.disabled = false;
   }
 }
 
@@ -1763,7 +1774,7 @@ function spSelectMode(mode, btn){
   var startBtn = document.getElementById('sp-start-btn');
   if(startBtn){
     var connected = spPlayers.filter(function(p){ return p.token; }).length;
-    startBtn.disabled = !(connected >= 2 || mode === 'completa');
+    startBtn.disabled = !(connected >= 2 || mode === 'completa' || (mode === 'adivina' && connected >= 1));
   }
 }
 
@@ -1771,14 +1782,17 @@ function spStartGame(){
   spScores = {};
   spRound = 0;
   spUsedLyrics = [];
+  spUsedAdivina = [];
   spMatchPairs = [];
   spMatchRound = 0;
+  if(spAdivinaTimer){ clearInterval(spAdivinaTimer); spAdivinaTimer = null; }
   spPlayers.forEach(function(p){ spScores[p.name] = 0; });
   showScreen('spotify-game-screen');
   if(spGameMode === 'quien-es') spRoundQuienEs();
   else if(spGameMode === 'completa') spRoundCompleta();
   else if(spGameMode === 'match'){ spBuildMatchPairs(); spRoundMatch(); }
   else if(spGameMode === 'ruleta') spRoundRuleta();
+  else if(spGameMode === 'adivina') spRoundAdivina();
 }
 
 function spUpdateRoundTag(){
@@ -2272,7 +2286,119 @@ function spRestartGame(){
   spRound = 0;
   spMatchRound = 0;
   spUsedLyrics = [];
+  spUsedAdivina = [];
+  if(spAdivinaTimer){ clearInterval(spAdivinaTimer); spAdivinaTimer = null; }
   spStartGame();
+}
+
+/* --- Adivina la canción --- */
+function spRoundAdivina(){
+  spStopAudio();
+  if(spAdivinaTimer){ clearInterval(spAdivinaTimer); spAdivinaTimer = null; }
+  if(spRound >= spTotalRounds){ spEndGame(); return; }
+  spUpdateRoundTag();
+
+  var allTracks = [];
+  spPlayers.forEach(function(p){
+    if(p.tracks){
+      p.tracks.forEach(function(t){
+        if(t.previewUrl && spUsedAdivina.indexOf(t.title+'|'+t.artist) === -1){
+          allTracks.push({track:t, owner:p});
+        }
+      });
+    }
+  });
+
+  if(allTracks.length === 0){
+    spUsedAdivina = [];
+    spPlayers.forEach(function(p){
+      if(p.tracks) p.tracks.forEach(function(t){
+        if(t.previewUrl) allTracks.push({track:t, owner:p});
+      });
+    });
+  }
+
+  if(allTracks.length === 0){
+    document.getElementById('sp-game-content').innerHTML =
+      '<div style="text-align:center;color:var(--muted);padding:20px;line-height:1.6;">No hay canciones con preview disponibles.<br>Spotify no siempre provee previews. Probá con otras canciones.</div>' +
+      '<button class="sp-action-btn secondary" onclick="spRound++;spRoundAdivina()">Saltar →</button>';
+    return;
+  }
+
+  var pick = allTracks[Math.floor(Math.random() * allTracks.length)];
+  spAdivinaCurrent = pick;
+  spUsedAdivina.push(pick.track.title+'|'+pick.track.artist);
+
+  spPlayAudio(pick.track.previewUrl);
+
+  var secs = 15;
+  var html =
+    '<div style="text-align:center;">' +
+    '<div style="font-size:2.5rem;margin-bottom:8px;">🔊</div>' +
+    '<div style="font-size:1.15rem;font-weight:800;margin-bottom:4px;">¿Adivina la canción?</div>' +
+    '<div style="font-size:.82rem;color:var(--muted);margin-bottom:20px;">Escuchá y adiviná el título o artista</div>' +
+    '<div id="sp-adivina-timer" style="font-size:4rem;font-weight:900;color:var(--sp-green);line-height:1;margin-bottom:6px;">15</div>' +
+    '<div style="font-size:.75rem;color:var(--muted);margin-bottom:20px;">segundos</div>' +
+    '<button class="sp-action-btn" onclick="spAdivinaReveal()">Revelar canción 🎤</button>' +
+    '</div>';
+  document.getElementById('sp-game-content').innerHTML = html;
+
+  spAdivinaTimer = setInterval(function(){
+    secs--;
+    var el = document.getElementById('sp-adivina-timer');
+    if(el){
+      el.textContent = secs;
+      if(secs <= 5) el.style.color = '#ef5350';
+    }
+    if(secs <= 0){
+      clearInterval(spAdivinaTimer);
+      spAdivinaTimer = null;
+      spAdivinaReveal();
+    }
+  }, 1000);
+}
+
+function spAdivinaReveal(){
+  if(spAdivinaTimer){ clearInterval(spAdivinaTimer); spAdivinaTimer = null; }
+  spStopAudio();
+  var pick = spAdivinaCurrent;
+  if(!pick) return;
+
+  var albumImg = pick.track.albumImg
+    ? '<img src="'+eh(pick.track.albumImg)+'" style="width:90px;height:90px;border-radius:10px;object-fit:cover;margin-bottom:12px;" />'
+    : '<div style="font-size:3rem;margin-bottom:12px;">🎵</div>';
+
+  var playerBtns = spPlayers.map(function(p, i){
+    return '<button class="sp-action-btn secondary sp-adivina-player-btn" onclick="spAdivinaScore('+i+',this)">'+eh(p.name)+'</button>';
+  }).join('');
+
+  var html =
+    '<div style="text-align:center;">' +
+    albumImg +
+    '<div style="font-size:1.2rem;font-weight:900;margin-bottom:4px;">'+eh(pick.track.title)+'</div>' +
+    '<div style="font-size:.9rem;color:var(--muted);margin-bottom:6px;">'+eh(pick.track.artist)+'</div>' +
+    '<div style="font-size:.78rem;color:var(--sp-green);margin-bottom:18px;">Era de la playlist de <b>'+eh(pick.owner.name)+'</b> 🎵</div>' +
+    '<div style="font-size:.85rem;font-weight:600;margin-bottom:10px;">¿Quién adivinó primero?</div>' +
+    '<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:10px;">'+playerBtns+'</div>' +
+    '<button class="sp-action-btn secondary" onclick="spRound++;spRoundAdivina()">Nadie adivinó →</button>' +
+    '</div>';
+  document.getElementById('sp-game-content').innerHTML = html;
+}
+
+function spAdivinaScore(playerIdx, btn){
+  var p = spPlayers[playerIdx];
+  if(!p) return;
+  spScores[p.name] = (spScores[p.name] || 0) + 1;
+  document.querySelectorAll('.sp-adivina-player-btn').forEach(function(b){ b.disabled = true; });
+  var content = document.getElementById('sp-game-content');
+  if(content){
+    var msg = document.createElement('div');
+    msg.style.cssText = 'margin-top:14px;text-align:center;';
+    msg.innerHTML =
+      '<div style="font-size:1rem;font-weight:800;color:var(--sp-green);margin-bottom:10px;">🎉 '+eh(p.name)+' suma un punto!</div>' +
+      '<button class="sp-action-btn" onclick="spRound++;spRoundAdivina()">Siguiente →</button>';
+    content.appendChild(msg);
+  }
 }
 
 function spConfirmExit(){
