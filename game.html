@@ -1560,7 +1560,8 @@ function spConnect(playerIdx){
       'code_challenge_method=S256',
       'code_challenge=' + encodeURIComponent(challenge),
       'state=' + encodeURIComponent(stateStr),
-      'scope=' + encodeURIComponent('user-top-read user-read-recently-played')
+      'scope=' + encodeURIComponent('user-top-read user-read-recently-played'),
+      'show_dialog=true'
     ];
     window.location.href = 'https://accounts.spotify.com/authorize?' + params.join('&');
   });
