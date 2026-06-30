@@ -1532,24 +1532,64 @@ var SP_LYRICS = [
   }
 })();
 
+var spPendingState = null;
+
 function spCheckPendingConnect(){
   var pendingStr = localStorage.getItem('sp_pending_connect');
   if(!pendingStr) return;
   try{
     var pending = JSON.parse(pendingStr);
-    if(pending && pending.playerIdx !== undefined){
+    if(!pending || pending.playerIdx === undefined){ localStorage.removeItem('sp_pending_connect'); return; }
+    spPlayers = (pending.players || []).map(function(p){
+      return {name:p.name, token:p.token||null, profile:p.profile||null, tracks:p.tracks||[], artists:p.artists||[]};
+    });
+    if(pending.stage === 2){
+      // volvió del logout social → conectar directamente
       localStorage.removeItem('sp_pending_connect');
-      spPlayers = (pending.players || []).map(function(p){
-        return {name:p.name, token:p.token||null, profile:p.profile||null, tracks:p.tracks||[], artists:p.artists||[]};
-      });
-      setTimeout(function(){
-        goToSpotifyGame();
-        setTimeout(function(){ spDoConnect(pending.playerIdx); }, 400);
-      }, 100);
+      setTimeout(function(){ goToSpotifyGame(); setTimeout(function(){ spDoConnect(pending.playerIdx); }, 400); }, 100);
+    } else {
+      // volvió del logout de Spotify → preguntar por red social
+      setTimeout(function(){ goToSpotifyGame(); setTimeout(function(){ spShowSocialModal(pending); }, 400); }, 100);
     }
-  }catch(e){
-    localStorage.removeItem('sp_pending_connect');
-  }
+  }catch(e){ localStorage.removeItem('sp_pending_connect'); }
+}
+
+function spShowSocialModal(pending){
+  spPendingState = pending;
+  localStorage.removeItem('sp_pending_connect');
+  var old = document.getElementById('sp-preconnect-modal');
+  if(old) old.remove();
+  var modal = document.createElement('div');
+  modal.id = 'sp-preconnect-modal';
+  modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.88);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  modal.innerHTML =
+    '<div style="background:#121212;border-radius:16px;padding:24px;max-width:340px;width:100%;text-align:center;">' +
+    '<div style="font-size:1.5rem;margin-bottom:6px;">✅</div>' +
+    '<div style="font-size:1rem;font-weight:800;margin-bottom:14px;">Sesión de Spotify cerrada</div>' +
+    '<div style="font-size:.85rem;color:#aaa;margin-bottom:16px;line-height:1.5;">¿Entras en Spotify con Facebook, Google u otro servicio?</div>' +
+    '<button onclick="spBeginSocialLogout(\'facebook\')" style="width:100%;background:#1877f2;color:#fff;border:none;border-radius:10px;padding:12px;font-size:.88rem;font-weight:700;cursor:pointer;margin-bottom:8px;">Sí, uso Facebook →</button>' +
+    '<button onclick="spBeginSocialLogout(\'google\')" style="width:100%;background:#fff;color:#222;border:none;border-radius:10px;padding:12px;font-size:.88rem;font-weight:700;cursor:pointer;margin-bottom:12px;">Sí, uso Google →</button>' +
+    '<button onclick="spConnectNow()" style="width:100%;background:#1db954;color:#fff;border:none;border-radius:10px;padding:12px;font-size:.88rem;font-weight:700;cursor:pointer;margin-bottom:8px;">No, conectar directamente →</button>' +
+    '<button onclick="document.getElementById(\'sp-preconnect-modal\').remove();" style="width:100%;background:transparent;color:#666;border:1px solid #333;border-radius:10px;padding:9px;font-size:.82rem;cursor:pointer;">Cancelar</button>' +
+    '</div>';
+  document.body.appendChild(modal);
+}
+
+function spBeginSocialLogout(provider){
+  if(!spPendingState) return;
+  spPendingState.stage = 2;
+  localStorage.setItem('sp_pending_connect', JSON.stringify(spPendingState));
+  spPendingState = null;
+  var urls = {facebook:'https://m.facebook.com/logout/', google:'https://accounts.google.com/logout'};
+  window.location.href = urls[provider] || 'https://accounts.google.com/logout';
+}
+
+function spConnectNow(){
+  var pending = spPendingState;
+  spPendingState = null;
+  var modal = document.getElementById('sp-preconnect-modal');
+  if(modal) modal.remove();
+  if(pending) spDoConnect(pending.playerIdx);
 }
 
 window.addEventListener('pageshow', function(){
