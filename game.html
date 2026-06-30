@@ -1571,35 +1571,39 @@ function spShowPreConnect(playerIdx){
     '<div style="background:#121212;border-radius:16px;padding:24px;max-width:340px;width:100%;text-align:center;">' +
     '<div style="font-size:2rem;margin-bottom:10px;">🔄</div>' +
     '<div style="font-size:1.1rem;font-weight:800;margin-bottom:8px;">Turno de ' + eh(name) + '</div>' +
-    '<div style="font-size:.85rem;color:#aaa;margin-bottom:18px;line-height:1.5;">' +
-    'Se cerrará la sesión actual de Spotify para que puedas entrar con tu cuenta.' +
+    '<div style="font-size:.85rem;color:#aaa;margin-bottom:16px;line-height:1.5;">' +
+    'Primero cierra la sesión de Spotify. Al pulsar el botón se abrirá la página de cierre de sesión.' +
     '</div>' +
-    '<button id="sp-preconnect-btn" onclick="spLogoutAndConnect(' + playerIdx + ');" style="width:100%;background:#1db954;color:#fff;border:none;border-radius:10px;padding:13px;font-size:.95rem;font-weight:700;cursor:pointer;margin-bottom:8px;">Conectar mi cuenta →</button>' +
-    '<div id="sp-preconnect-note" style="font-size:.75rem;color:#666;margin-bottom:12px;line-height:1.4;">Si entras con Facebook u otra red social y sigue conectando la misma cuenta, prueba a usar el modo incógnito del navegador.</div>' +
+    '<div style="background:#1a1a1a;border-radius:10px;padding:12px;margin-bottom:16px;text-align:left;">' +
+    '<div style="font-size:.78rem;color:#888;margin-bottom:6px;font-weight:600;">PASO 1</div>' +
+    '<a href="https://accounts.spotify.com/logout" target="_blank" onclick="spPreConnectStep2(' + playerIdx + ');" style="display:block;background:#1db954;color:#fff;border-radius:8px;padding:11px 14px;text-decoration:none;font-size:.9rem;font-weight:700;text-align:center;">Cerrar sesión de Spotify →</a>' +
+    '<div style="font-size:.72rem;color:#555;margin-top:6px;">Si usas Facebook u otra red social, cierra también esa sesión en el navegador.</div>' +
+    '</div>' +
+    '<div style="background:#1a1a1a;border-radius:10px;padding:12px;margin-bottom:16px;text-align:left;">' +
+    '<div style="font-size:.78rem;color:#888;margin-bottom:6px;font-weight:600;">PASO 2</div>' +
+    '<button id="sp-step2-btn" onclick="spDoConnectFromModal(' + playerIdx + ');" disabled style="width:100%;background:#333;color:#888;border:none;border-radius:8px;padding:11px 14px;font-size:.9rem;font-weight:700;cursor:not-allowed;">Ya cerré sesión — Conectar mi cuenta</button>' +
+    '</div>' +
     '<button onclick="document.getElementById(\'sp-preconnect-modal\').remove();" style="width:100%;background:transparent;color:#888;border:1px solid #333;border-radius:10px;padding:10px;font-size:.85rem;cursor:pointer;">Cancelar</button>' +
     '</div>';
   document.body.appendChild(modal);
 }
 
-function spLogoutAndConnect(playerIdx){
-  var btn = document.getElementById('sp-preconnect-btn');
-  if(btn){ btn.disabled = true; btn.textContent = 'Cerrando sesión...'; }
-  var iframe = document.createElement('iframe');
-  iframe.style.cssText = 'display:none;';
-  var done = false;
-  function proceed(){
-    if(done) return;
-    done = true;
-    if(iframe.parentNode) document.body.removeChild(iframe);
-    var modal = document.getElementById('sp-preconnect-modal');
-    if(modal) modal.remove();
-    spDoConnect(playerIdx);
-  }
-  iframe.onload = function(){ setTimeout(proceed, 500); };
-  iframe.onerror = proceed;
-  document.body.appendChild(iframe);
-  iframe.src = 'https://accounts.spotify.com/logout';
-  setTimeout(proceed, 2500);
+function spPreConnectStep2(playerIdx){
+  setTimeout(function(){
+    var btn = document.getElementById('sp-step2-btn');
+    if(btn){
+      btn.disabled = false;
+      btn.style.background = '#1db954';
+      btn.style.color = '#fff';
+      btn.style.cursor = 'pointer';
+    }
+  }, 1500);
+}
+
+function spDoConnectFromModal(playerIdx){
+  var modal = document.getElementById('sp-preconnect-modal');
+  if(modal) modal.remove();
+  spDoConnect(playerIdx);
 }
 
 function spDoConnect(playerIdx){
