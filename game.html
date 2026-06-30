@@ -1527,8 +1527,34 @@ var SP_LYRICS = [
     } else {
       history.replaceState({},'',window.location.pathname);
     }
+  } else {
+    spCheckPendingConnect();
   }
 })();
+
+function spCheckPendingConnect(){
+  var pendingStr = localStorage.getItem('sp_pending_connect');
+  if(!pendingStr) return;
+  try{
+    var pending = JSON.parse(pendingStr);
+    if(pending && pending.playerIdx !== undefined){
+      localStorage.removeItem('sp_pending_connect');
+      spPlayers = (pending.players || []).map(function(p){
+        return {name:p.name, token:p.token||null, profile:p.profile||null, tracks:p.tracks||[], artists:p.artists||[]};
+      });
+      setTimeout(function(){
+        goToSpotifyGame();
+        setTimeout(function(){ spDoConnect(pending.playerIdx); }, 400);
+      }, 100);
+    }
+  }catch(e){
+    localStorage.removeItem('sp_pending_connect');
+  }
+}
+
+window.addEventListener('pageshow', function(){
+  spCheckPendingConnect();
+});
 
 function spRandStr(n){
   var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -1571,39 +1597,25 @@ function spShowPreConnect(playerIdx){
     '<div style="background:#121212;border-radius:16px;padding:24px;max-width:340px;width:100%;text-align:center;">' +
     '<div style="font-size:2rem;margin-bottom:10px;">🔄</div>' +
     '<div style="font-size:1.1rem;font-weight:800;margin-bottom:8px;">Turno de ' + eh(name) + '</div>' +
-    '<div style="font-size:.85rem;color:#aaa;margin-bottom:16px;line-height:1.5;">' +
-    'Primero cierra la sesión de Spotify. Al pulsar el botón se abrirá la página de cierre de sesión.' +
+    '<div style="font-size:.85rem;color:#aaa;margin-bottom:18px;line-height:1.5;">' +
+    'Para conectar una cuenta distinta hay que cerrar sesión de Spotify primero.<br><span style="font-size:.78rem;color:#666;">Serás redirigido a Spotify. Al volver (botón atrás), la conexión continuará sola.</span>' +
     '</div>' +
-    '<div style="background:#1a1a1a;border-radius:10px;padding:12px;margin-bottom:16px;text-align:left;">' +
-    '<div style="font-size:.78rem;color:#888;margin-bottom:6px;font-weight:600;">PASO 1</div>' +
-    '<a href="https://accounts.spotify.com/logout" target="_blank" onclick="spPreConnectStep2(' + playerIdx + ');" style="display:block;background:#1db954;color:#fff;border-radius:8px;padding:11px 14px;text-decoration:none;font-size:.9rem;font-weight:700;text-align:center;">Cerrar sesión de Spotify →</a>' +
-    '<div style="font-size:.72rem;color:#555;margin-top:6px;">Si usas Facebook u otra red social, cierra también esa sesión en el navegador.</div>' +
-    '</div>' +
-    '<div style="background:#1a1a1a;border-radius:10px;padding:12px;margin-bottom:16px;text-align:left;">' +
-    '<div style="font-size:.78rem;color:#888;margin-bottom:6px;font-weight:600;">PASO 2</div>' +
-    '<button id="sp-step2-btn" onclick="spDoConnectFromModal(' + playerIdx + ');" disabled style="width:100%;background:#333;color:#888;border:none;border-radius:8px;padding:11px 14px;font-size:.9rem;font-weight:700;cursor:not-allowed;">Ya cerré sesión — Conectar mi cuenta</button>' +
-    '</div>' +
+    '<button onclick="spBeginLogout(' + playerIdx + ');" style="width:100%;background:#1db954;color:#fff;border:none;border-radius:10px;padding:13px;font-size:.95rem;font-weight:700;cursor:pointer;margin-bottom:8px;">Cerrar sesión y conectar →</button>' +
+    '<div style="font-size:.72rem;color:#555;margin-bottom:12px;line-height:1.4;">Si entras con Facebook, cierra también la sesión de Facebook en el navegador antes de volver.</div>' +
     '<button onclick="document.getElementById(\'sp-preconnect-modal\').remove();" style="width:100%;background:transparent;color:#888;border:1px solid #333;border-radius:10px;padding:10px;font-size:.85rem;cursor:pointer;">Cancelar</button>' +
     '</div>';
   document.body.appendChild(modal);
 }
 
-function spPreConnectStep2(playerIdx){
-  setTimeout(function(){
-    var btn = document.getElementById('sp-step2-btn');
-    if(btn){
-      btn.disabled = false;
-      btn.style.background = '#1db954';
-      btn.style.color = '#fff';
-      btn.style.cursor = 'pointer';
-    }
-  }, 1500);
-}
-
-function spDoConnectFromModal(playerIdx){
-  var modal = document.getElementById('sp-preconnect-modal');
-  if(modal) modal.remove();
-  spDoConnect(playerIdx);
+function spBeginLogout(playerIdx){
+  var state = {
+    playerIdx: playerIdx,
+    players: spPlayers.map(function(p){
+      return {name:p.name, token:p.token||null, profile:p.profile||null, tracks:p.tracks||[], artists:p.artists||[]};
+    })
+  };
+  localStorage.setItem('sp_pending_connect', JSON.stringify(state));
+  window.location.href = 'https://accounts.spotify.com/logout';
 }
 
 function spDoConnect(playerIdx){
