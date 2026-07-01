@@ -507,7 +507,8 @@ input:checked+.toggle-slider:before { transform:translateX(20px); }
   <p class="setup-subtitle">Adivina las respuestas del grupo</p>
   <div style="margin-bottom:12px;">
     <div class="setup-section-label">Jugadores</div>
-    <div id="kn-setup-content"></div>
+    <div id="kn-player-list"></div>
+    <button class="add-player-btn" onclick="knAddPlayer()">+ Agregar jugador</button>
   </div>
   <div style="background:var(--surface);border-radius:12px;padding:14px;margin-bottom:20px;font-size:.85rem;color:var(--muted);line-height:1.6;">
     🎯 Un jugador responde en secreto. El resto adivina.<br>
@@ -2658,22 +2659,39 @@ var knGuessOrder = [];
 var knGuessStep = 0;
 
 function knGoTo(){
-  knPlayers = (players && players.length >= 2) ? players.slice() : [];
-  knDrinks = {};
-  knPlayers.forEach(function(p){ knDrinks[p.name] = 0; });
-  showScreen('conoce-setup-screen');
-  var el = document.getElementById('kn-setup-content');
-  if(!el) return;
   if(knPlayers.length < 2){
-    el.innerHTML = '<div style="color:var(--muted);text-align:center;padding:16px;">Necesitas al menos 2 jugadores.<br>Vuelve al menú y añade jugadores primero.</div>';
-    return;
+    knPlayers = [{name:'Jugador 1'},{name:'Jugador 2'}];
   }
-  el.innerHTML = knPlayers.map(function(p){
-    return '<div style="padding:10px 14px;background:var(--card-bg);border-radius:10px;margin-bottom:7px;font-weight:600;">'+eh(p.name)+'</div>';
+  showScreen('conoce-setup-screen');
+  knRenderPlayers();
+}
+
+function knRenderPlayers(){
+  var el = document.getElementById('kn-player-list');
+  if(!el) return;
+  el.innerHTML = knPlayers.map(function(p, i){
+    return '<div class="player-input-row">'+
+      '<input class="player-input" type="text" value="'+eh(p.name)+'" placeholder="Nombre" '+
+      'oninput="knPlayers['+i+'].name=this.value.trim()||\'Jugador '+(i+1)+'\'"/>'+
+      (knPlayers.length > 2 ? '<button class="remove-player" onclick="knRemovePlayer('+i+')">✕</button>' : '')+
+      '</div>';
   }).join('');
 }
 
+function knAddPlayer(){
+  knPlayers.push({name:'Jugador '+(knPlayers.length+1)});
+  knRenderPlayers();
+}
+
+function knRemovePlayer(i){
+  if(knPlayers.length <= 2) return;
+  knPlayers.splice(i, 1);
+  knRenderPlayers();
+}
+
 function knStartGame(){
+  var inputs = document.querySelectorAll('#kn-player-list .player-input');
+  inputs.forEach(function(inp, i){ if(knPlayers[i]) knPlayers[i].name = inp.value.trim() || ('Jugador '+(i+1)); });
   if(knPlayers.length < 2) return;
   knRound = 0;
   knUsedQuestions = [];
