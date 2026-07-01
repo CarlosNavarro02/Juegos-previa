@@ -513,12 +513,13 @@ input:checked+.toggle-slider:before { transform:translateX(20px); }
     🎯 Un jugador responde en secreto. El resto adivina.<br>
     ❌ Fallas → bebes 1 &nbsp;·&nbsp; 🕵️ Nadie acierta → protagonista bebe 2 &nbsp;·&nbsp; 😅 Todos aciertan → protagonista bebe 2
   </div>
-  <button class="primary-btn" onclick="knStartGame()">¡Empezar! →</button>
+  <button class="start-btn" onclick="knStartGame()">¡Empezar! →</button>
 </div>
 
 <!-- CONOCE GAME -->
 <div id="conoce-game-screen" class="screen" style="padding:0;gap:0;">
   <div style="padding:16px 16px 40px;display:flex;flex-direction:column;flex:1;overflow-y:auto;">
+    <button class="back-btn" onclick="showScreen('conoce-setup-screen')" style="align-self:flex-start;margin-bottom:8px;">← Volver</button>
     <div id="kn-game-content"></div>
   </div>
 </div>
@@ -530,8 +531,8 @@ input:checked+.toggle-slider:before { transform:translateX(20px); }
     <h2>¡Juego terminado!</h2>
     <p style="color:var(--muted);font-size:.88rem;">Ranking por tragos bebidos</p>
     <div id="kn-end-content" style="width:100%;"></div>
-    <button class="primary-btn" onclick="knGoTo()">Jugar de nuevo</button>
-    <button class="secondary-btn" onclick="goHome()">Menú principal</button>
+    <button class="start-btn" onclick="knGoTo()">Jugar de nuevo</button>
+    <button class="secondary-btn" onclick="goHome()" style="margin-top:8px;">Menú principal</button>
   </div>
 </div>
 
