@@ -209,6 +209,16 @@ input:checked+.toggle-slider:before { transform:translateX(20px); }
   .pill { font-size:.72rem; }
 }
 
+/* ---- CONOCE ---- */
+.kn-btn { width:100%; background:var(--accent); color:#fff; border:none; border-radius:12px; padding:14px; font-size:.95rem; font-weight:700; cursor:pointer; margin-top:4px; }
+.kn-btn:active { opacity:.85; }
+.kn-btn.secondary { background:var(--surface); color:var(--text); border:1px solid var(--border); }
+.kn-question-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:18px; margin-bottom:14px; }
+.kn-option-btn { width:100%; background:var(--card-bg); border:2px solid var(--border); border-radius:12px; padding:13px 16px; color:var(--text); font-size:.9rem; cursor:pointer; text-align:left; margin-bottom:8px; display:block; transition:border-color .15s,background .15s; }
+.kn-option-btn:active { border-color:var(--accent); }
+.kn-option-btn.selected { border-color:var(--accent); background:#2a1520; }
+.kn-player-result { display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:10px; background:var(--card-bg); margin-bottom:7px; border-left:3px solid var(--border); }
+
 /* ---- SPOTIFY ---- */
 :root { --sp-green:#1db954; --sp-dark:#051510; }
 #spotify-setup-screen { gap:0; overflow-y:auto; padding-bottom:40px; }
@@ -278,9 +288,9 @@ input:checked+.toggle-slider:before { transform:translateX(20px); }
       <span class="game-icon">🔥</span>
       <div><span class="game-name">Yo Nunca</span><span class="game-desc">Picante</span></div>
     </button>
-    <button class="game-card locked">
-      <span class="game-icon">🎲</span>
-      <div><span class="game-name">Verdad o Reto</span><span class="game-desc">Próximamente</span></div>
+    <button class="game-card" onclick="knGoTo()">
+      <span class="game-icon">🫵</span>
+      <div><span class="game-name">¿Cuánto me conoces?</span><span class="game-desc">Adivina las respuestas del grupo</span></div>
     </button>
     <button class="game-card" onclick="goToSpotifyGame()">
       <span class="game-icon">🎵</span>
@@ -487,6 +497,41 @@ input:checked+.toggle-slider:before { transform:translateX(20px); }
       <button class="secondary-btn" onclick="goToSpotifyGame()">Cambiar modo</button>
       <button class="secondary-btn" onclick="goHome()">Menú principal</button>
     </div>
+  </div>
+</div>
+
+<!-- CONOCE SETUP -->
+<div id="conoce-setup-screen" class="screen">
+  <button class="back-btn" onclick="goHome()">← Volver</button>
+  <h2>¿Cuánto me conoces? 🫵</h2>
+  <p class="setup-subtitle">Adivina las respuestas del grupo</p>
+  <div style="margin-bottom:12px;">
+    <div class="setup-section-label">Jugadores</div>
+    <div id="kn-setup-content"></div>
+  </div>
+  <div style="background:var(--surface);border-radius:12px;padding:14px;margin-bottom:20px;font-size:.85rem;color:var(--muted);line-height:1.6;">
+    🎯 Un jugador responde en secreto. El resto adivina.<br>
+    ❌ Fallas → bebes 1 &nbsp;·&nbsp; 🕵️ Nadie acierta → protagonista bebe 2 &nbsp;·&nbsp; 😅 Todos aciertan → protagonista bebe 2
+  </div>
+  <button class="primary-btn" onclick="knStartGame()">¡Empezar! →</button>
+</div>
+
+<!-- CONOCE GAME -->
+<div id="conoce-game-screen" class="screen" style="padding:0;gap:0;">
+  <div style="padding:16px 16px 40px;display:flex;flex-direction:column;flex:1;overflow-y:auto;">
+    <div id="kn-game-content"></div>
+  </div>
+</div>
+
+<!-- CONOCE END -->
+<div id="conoce-end-screen" class="screen">
+  <div style="display:flex;flex-direction:column;align-items:center;gap:12px;width:100%;padding-bottom:40px;">
+    <div style="font-size:4rem;">🫵</div>
+    <h2>¡Juego terminado!</h2>
+    <p style="color:var(--muted);font-size:.88rem;">Ranking por tragos bebidos</p>
+    <div id="kn-end-content" style="width:100%;"></div>
+    <button class="primary-btn" onclick="knGoTo()">Jugar de nuevo</button>
+    <button class="secondary-btn" onclick="goHome()">Menú principal</button>
   </div>
 </div>
 
@@ -2563,6 +2608,240 @@ function spConfirmExit(){
     '<button class="oc-btn" onclick="spStopAudio();closeOverlay();goToSpotifyGame()">Salir</button>'+
     '<button class="os-btn" onclick="closeOverlay()">Seguir jugando</button>'+
     '</div>');
+}
+
+/* ===== ¿CUÁNTO ME CONOCES? ===== */
+var KN_QUESTIONS = [
+  {text:'¿Qué te describe mejor en una fiesta?', options:['Me voy de los primeros','Acabo bailando en el centro','Ligo con alguien','Cuido a los demás','Acabo muy borracho/a']},
+  {text:'¿Cuál es tu mayor defecto?', options:['Soy muy cabezota','Soy muy celoso/a','Soy muy vago/a','Soy muy dramático/a','Soy muy chismoso/a']},
+  {text:'¿Cómo está tu vida sentimental de verdad?', options:['Felizmente soltero/a','Liado/a sin etiquetas','En una relación estable','Enamorado/a en secreto','Un caos total']},
+  {text:'¿Qué harías con un millón de euros?', options:['Viajar por el mundo','Invertirlo todo','Gastármelo en caprichos','Comprarme una casa','Repartirlo con mi familia']},
+  {text:'¿Cuál es tu mayor miedo?', options:['Quedarse solo/a','Fracasar en la vida','Las alturas o espacios cerrados','La muerte','Que me dejen de querer']},
+  {text:'¿Cuánto tardas en responder mensajes?', options:['Al instante siempre','En menos de 10 minutos','En horas si no me apetece','Días si puedo','Dejo en visto sin querer o queriendo']},
+  {text:'¿Cómo eres con el dinero?', options:['Muy ahorrador/a','Gasto lo justo','Me paso bastante','Gasto todo lo que tengo','Siempre en números rojos']},
+  {text:'¿Qué tipo de persona te suele gustar?', options:['Inteligente y seria','Graciosa y desenfadada','Guapa pero complicada','Apasionada e intensa','La que me aguante a mí']},
+  {text:'¿Cuál sería tu pecado capital más representativo?', options:['La pereza','La envidia','La gula','La lujuria','La soberbia']},
+  {text:'¿Qué haces cuando tienes un problema gordo?', options:['Lo hablo con alguien','Me lo guardo y aguanto','Lo distraigo saliendo','Lloro solo/a en casa','Me obsesiono dándole vueltas']},
+  {text:'¿Cuántas relaciones sentimentales has tenido?', options:['Ninguna','Una o dos','Entre tres y cinco','Más de cinco','Pierdo la cuenta']},
+  {text:'¿Qué te da más vergüenza de tu pasado?', options:['Mis fotos de hace años','Mis mensajes de borracho/a','Mis relaciones pasadas','Cómo era en el instituto','Nada, no me arrepiento de nada']},
+  {text:'Si pudieras cambiar algo de tu carácter, ¿qué sería?', options:['Ser más seguro/a de mí mismo/a','Ser menos impulsivo/a','Ser más ambicioso/a','Ser menos ansioso/a','Nada, me acepto tal como soy']},
+  {text:'¿Cómo reaccionas cuando alguien te gusta de verdad?', options:['Me vuelvo torpe y raro/a','Me pongo en modo seducción','Lo ignoro completamente','Se lo digo directamente','Espero a que dé el primer paso']},
+  {text:'¿Cuál es tu relación con el alcohol?', options:['No bebo nada','Bebo poco y con control','Disfruto pero sé parar','Me paso más de lo que debería','Tengo demasiadas historias']},
+  {text:'¿Cómo eres en una discusión?', options:['Cedo enseguida para que pare','Razono con calma','Me acaloro mucho','Necesito tener la última palabra','Me voy sin decir nada']},
+  {text:'¿Qué ves primero en una persona?', options:['Los ojos','La sonrisa','El cuerpo','Cómo trata a los demás','El sentido del humor']},
+  {text:'¿Qué pasaría si te dejan solo/a en casa un fin de semana?', options:['Organizo una fiesta','Maratón de series sin parar','Duermo todo lo que puedo','Salgo a ligar','Por fin hago todo lo pendiente']},
+  {text:'¿Cuál es tu mayor fuente de estrés ahora mismo?', options:['El trabajo o los estudios','El dinero','Las relaciones personales','Mi propia cabeza','Ninguna, estoy tranquilo/a']},
+  {text:'¿Con qué frecuencia miras el perfil de tu ex?', options:['Nunca, está bloqueado/a','Nunca pero sin bloquear','Alguna vez si me acuerdo','Más de lo que reconocería','Tengo sus stories en favoritos']},
+  {text:'¿Cuánto tardas en enamorarte?', options:['Me enamoro a la primera','Semanas o meses','Necesito tiempo de verdad','Casi nunca me enamoro','No sé si me he enamorado de verdad']},
+  {text:'¿Qué harías si descubres que te han mentido?', options:['Lo confronto directamente','Me alejo en silencio','Busco mi venganza','Lo perdono fácilmente','Depende de quién y de qué']},
+  {text:'¿Cuál es tu mayor fuente de procrastinación?', options:['El móvil y las redes','Ver series o películas','Quedar con gente','Dormir','Poner excusas creativas']},
+  {text:'¿Cómo acabas normalmente las noches de fiesta?', options:['En casa a una hora razonable','Después del after','Sin recordar cómo llegué','Cuidando a alguien del grupo','En casa de alguien inesperado']},
+  {text:'¿Qué tipo de persona serías en una peli de instituto?', options:['El/la popular','El/la empollón/a','El/la rebelde','El/la gracioso/a del grupo','El/la que no encaja en ningún sitio']},
+  {text:'¿Cuántas horas duermes de media?', options:['Menos de 6','Entre 6 y 7','Las 8 recomendadas','Entre 9 y 10','Más de 10, soy un oso']},
+  {text:'¿Cómo te defines como amigo/a?', options:['El que siempre está disponible','El que da los mejores consejos','El que organiza los planes','El que hace reír a todos','El que desaparece pero siempre vuelve']},
+  {text:'¿Qué harías si ganaras un viaje gratis para dos?', options:['Me llevo a mi pareja o ligue','Me llevo a mi mejor amigo/a','Me llevo a un familiar','Vendo el billete extra','Voy solo/a a conocer gente']},
+  {text:'¿Cuál es tu vicio más inconfesable?', options:['Las redes sociales a todas horas','Comprar cosas que no necesito','Comer a deshoras','Ver reality shows','El cotilleo y los dramas ajenos']},
+  {text:'¿Qué harías si tu jefe o profesor te insultase?', options:['Me callo y aguanto','Le respondo en el momento','Lo denuncio por los canales oficiales','Se lo cuento a todos','Me voy sin decir nada y no vuelvo']},
+];
+
+var knPlayers = [];
+var knRound = 0;
+var knTotalRounds = 8;
+var knProtagonistIdx = -1;
+var knCurrentQuestion = null;
+var knProtagonistAnswer = -1;
+var knGuesses = {};
+var knDrinks = {};
+var knUsedQuestions = [];
+var knGuessOrder = [];
+var knGuessStep = 0;
+
+function knGoTo(){
+  knPlayers = (players && players.length >= 2) ? players.slice() : [];
+  knDrinks = {};
+  knPlayers.forEach(function(p){ knDrinks[p.name] = 0; });
+  showScreen('conoce-setup-screen');
+  var el = document.getElementById('kn-setup-content');
+  if(!el) return;
+  if(knPlayers.length < 2){
+    el.innerHTML = '<div style="color:var(--muted);text-align:center;padding:16px;">Necesitas al menos 2 jugadores.<br>Vuelve al menú y añade jugadores primero.</div>';
+    return;
+  }
+  el.innerHTML = knPlayers.map(function(p){
+    return '<div style="padding:10px 14px;background:var(--card-bg);border-radius:10px;margin-bottom:7px;font-weight:600;">'+eh(p.name)+'</div>';
+  }).join('');
+}
+
+function knStartGame(){
+  if(knPlayers.length < 2) return;
+  knRound = 0;
+  knUsedQuestions = [];
+  knDrinks = {};
+  knPlayers.forEach(function(p){ knDrinks[p.name] = 0; });
+  knNextRound();
+}
+
+function knNextRound(){
+  if(knRound >= knTotalRounds){ knEndGame(); return; }
+  knRound++;
+  knProtagonistIdx = (knRound - 1) % knPlayers.length;
+  var avail = [];
+  for(var i = 0; i < KN_QUESTIONS.length; i++){
+    if(knUsedQuestions.indexOf(i) === -1) avail.push(i);
+  }
+  if(avail.length === 0){ knUsedQuestions = []; avail = KN_QUESTIONS.map(function(_,i){ return i; }); }
+  var qIdx = avail[Math.floor(Math.random() * avail.length)];
+  knUsedQuestions.push(qIdx);
+  knCurrentQuestion = KN_QUESTIONS[qIdx];
+  knProtagonistAnswer = -1;
+  knGuesses = {};
+  knGuessOrder = [];
+  for(var j = 0; j < knPlayers.length; j++){
+    if(j !== knProtagonistIdx) knGuessOrder.push(j);
+  }
+  knGuessStep = 0;
+  showScreen('conoce-game-screen');
+  knRenderLookAway();
+}
+
+function knRenderLookAway(){
+  var name = eh(knPlayers[knProtagonistIdx].name);
+  document.getElementById('kn-game-content').innerHTML =
+    '<div style="text-align:center;padding:24px 0;">'+
+    '<div style="font-size:3rem;margin-bottom:10px;">🙈</div>'+
+    '<div style="font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Ronda '+knRound+' de '+knTotalRounds+'</div>'+
+    '<div style="font-size:1.15rem;font-weight:800;margin-bottom:8px;">Turno de <span style="color:var(--accent)">'+name+'</span></div>'+
+    '<div style="font-size:.88rem;color:var(--muted);margin-bottom:28px;">El resto del grupo: ¡mirad para otro lado!</div>'+
+    '<button class="kn-btn" onclick="knShowQuestion()">Soy '+name+', ver mi pregunta 👀</button>'+
+    '</div>';
+}
+
+function knShowQuestion(){
+  var name = eh(knPlayers[knProtagonistIdx].name);
+  var optHtml = knCurrentQuestion.options.map(function(opt,i){
+    return '<button class="kn-option-btn" onclick="knProtagonistPick('+i+')">'+eh(opt)+'</button>';
+  }).join('');
+  document.getElementById('kn-game-content').innerHTML =
+    '<div>'+
+    '<div style="font-size:.75rem;color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">Solo ve '+name+'</div>'+
+    '<div class="kn-question-card"><div style="font-size:1rem;font-weight:700;line-height:1.4;">'+eh(knCurrentQuestion.text)+'</div></div>'+
+    optHtml+
+    '<button id="kn-confirm-btn" class="kn-btn" onclick="knConfirmProtagonist()" style="opacity:.35;pointer-events:none;margin-top:6px;">Listo, pasar el móvil →</button>'+
+    '</div>';
+}
+
+function knProtagonistPick(idx){
+  knProtagonistAnswer = idx;
+  document.querySelectorAll('.kn-option-btn').forEach(function(b,i){ b.classList.toggle('selected', i===idx); });
+  var btn = document.getElementById('kn-confirm-btn');
+  if(btn){ btn.style.opacity='1'; btn.style.pointerEvents='auto'; }
+}
+
+function knConfirmProtagonist(){
+  if(knProtagonistAnswer === -1) return;
+  knShowPassScreen();
+}
+
+function knShowPassScreen(){
+  if(knGuessStep >= knGuessOrder.length){ knReveal(); return; }
+  var gIdx = knGuessOrder[knGuessStep];
+  var name = eh(knPlayers[gIdx].name);
+  document.getElementById('kn-game-content').innerHTML =
+    '<div style="text-align:center;padding:24px 0;">'+
+    '<div style="font-size:3rem;margin-bottom:10px;">📱</div>'+
+    '<div style="font-size:1.1rem;font-weight:800;margin-bottom:8px;">Pasa el móvil a <span style="color:var(--blue)">'+name+'</span></div>'+
+    '<div style="font-size:.85rem;color:var(--muted);margin-bottom:28px;">'+name+', toca cuando tengas el móvil</div>'+
+    '<button class="kn-btn" onclick="knShowGuesserQuestion('+gIdx+')">Tengo el móvil, adivinar →</button>'+
+    '</div>';
+}
+
+function knShowGuesserQuestion(gIdx){
+  var protagonist = eh(knPlayers[knProtagonistIdx].name);
+  var guesser = eh(knPlayers[gIdx].name);
+  var optHtml = knCurrentQuestion.options.map(function(opt,i){
+    return '<button class="kn-option-btn" onclick="knGuesserPick('+gIdx+','+i+')">'+eh(opt)+'</button>';
+  }).join('');
+  document.getElementById('kn-game-content').innerHTML =
+    '<div>'+
+    '<div style="font-size:.75rem;color:var(--blue);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">'+guesser+' adivina a '+protagonist+'</div>'+
+    '<div class="kn-question-card">'+
+      '<div style="font-size:.78rem;color:var(--muted);margin-bottom:6px;">La pregunta de '+protagonist+' era:</div>'+
+      '<div style="font-size:1rem;font-weight:700;line-height:1.4;">'+eh(knCurrentQuestion.text)+'</div>'+
+    '</div>'+
+    '<div style="font-size:.85rem;color:var(--muted);margin-bottom:10px;">¿Qué crees que respondió <strong style="color:var(--text)">'+protagonist+'</strong>?</div>'+
+    optHtml+
+    '<button id="kn-guess-btn" class="kn-btn" onclick="knConfirmGuess('+gIdx+')" style="opacity:.35;pointer-events:none;margin-top:6px;">Confirmar →</button>'+
+    '</div>';
+}
+
+function knGuesserPick(gIdx, optIdx){
+  document.querySelectorAll('.kn-option-btn').forEach(function(b,i){ b.classList.toggle('selected', i===optIdx); });
+  knGuesses[knPlayers[gIdx].name] = optIdx;
+  var btn = document.getElementById('kn-guess-btn');
+  if(btn){ btn.style.opacity='1'; btn.style.pointerEvents='auto'; }
+}
+
+function knConfirmGuess(gIdx){
+  if(knGuesses[knPlayers[gIdx].name] === undefined) return;
+  knGuessStep++;
+  knShowPassScreen();
+}
+
+function knReveal(){
+  var protagonist = knPlayers[knProtagonistIdx];
+  var correctAnswer = knCurrentQuestion.options[knProtagonistAnswer];
+  var correct = [], wrong = [];
+  knGuessOrder.forEach(function(idx){
+    var p = knPlayers[idx];
+    if(knGuesses[p.name] === knProtagonistAnswer){ correct.push(p.name); }
+    else { wrong.push(p.name); knDrinks[p.name] = (knDrinks[p.name]||0) + 1; }
+  });
+  var proMsg = '';
+  if(correct.length === 0){
+    proMsg = '<div style="color:var(--accent);font-size:.85rem;font-weight:700;margin-top:8px;">🕵️ ¡Eres un misterio! '+eh(protagonist.name)+' bebe 2 🍺</div>';
+    knDrinks[protagonist.name] = (knDrinks[protagonist.name]||0) + 2;
+  } else if(wrong.length === 0){
+    proMsg = '<div style="color:#ef9a9a;font-size:.85rem;font-weight:700;margin-top:8px;">😅 ¡Demasiado predecible! '+eh(protagonist.name)+' bebe 2 🍺</div>';
+    knDrinks[protagonist.name] = (knDrinks[protagonist.name]||0) + 2;
+  }
+  var resultsHtml = knGuessOrder.map(function(idx){
+    var p = knPlayers[idx];
+    var ok = knGuesses[p.name] === knProtagonistAnswer;
+    var guessed = knCurrentQuestion.options[knGuesses[p.name]] || '—';
+    return '<div class="kn-player-result" style="border-left-color:'+(ok?'var(--green)':'#ef5350')+';">'+
+      '<span style="font-size:1.2rem;">'+(ok?'✅':'❌')+'</span>'+
+      '<div style="flex:1;">'+
+        '<div style="font-weight:700;font-size:.88rem;">'+eh(p.name)+'</div>'+
+        '<div style="font-size:.76rem;color:var(--muted);">Dijo: '+eh(guessed)+'</div>'+
+      '</div>'+
+      (ok ? '<div style="font-size:.78rem;color:var(--green);font-weight:700;">¡Correcto!</div>'
+          : '<div style="font-size:.78rem;color:#ef9a9a;font-weight:700;">Bebe 1 🍺</div>')+
+    '</div>';
+  }).join('');
+  var isLast = knRound >= knTotalRounds;
+  document.getElementById('kn-game-content').innerHTML =
+    '<div>'+
+    '<div style="text-align:center;margin-bottom:16px;">'+
+      '<div style="font-size:.78rem;color:var(--muted);margin-bottom:6px;">La respuesta de '+eh(protagonist.name)+' era:</div>'+
+      '<div style="font-size:1.05rem;font-weight:800;color:var(--green);padding:12px 16px;background:#0d2010;border-radius:10px;">'+eh(correctAnswer)+'</div>'+
+      proMsg+
+    '</div>'+
+    resultsHtml+
+    '<button class="kn-btn" onclick="knNextRound()" style="margin-top:14px;">'+(isLast?'Ver resultados →':'Siguiente ronda →')+'</button>'+
+    '</div>';
+}
+
+function knEndGame(){
+  showScreen('conoce-end-screen');
+  var sorted = knPlayers.slice().sort(function(a,b){ return (knDrinks[b.name]||0)-(knDrinks[a.name]||0); });
+  var icons = ['🏆','🥈','🥉'];
+  document.getElementById('kn-end-content').innerHTML = sorted.map(function(p,i){
+    return '<div style="display:flex;align-items:center;gap:12px;background:var(--card-bg);border-radius:12px;padding:14px 16px;margin-bottom:8px;">'+
+      '<div style="font-size:1.3rem;">'+(icons[i]||'🎮')+'</div>'+
+      '<div style="flex:1;font-weight:700;">'+eh(p.name)+'</div>'+
+      '<div style="font-size:.85rem;color:var(--muted);">'+(knDrinks[p.name]||0)+' tragos</div>'+
+    '</div>';
+  }).join('');
 }
 </script>
 </body>
